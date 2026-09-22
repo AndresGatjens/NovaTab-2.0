@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Novantab</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup">
+      <header class="head">
+        <span class="site-icon" aria-hidden="true"></span>
+        <div class="site-meta">
+          <span class="site-title" id="site-title">Cargando…</span>
+          <span class="site-domain" id="site-domain"></span>
+        </div>
+      </header>
+
+      <p class="status" id="status" hidden></p>
+
+      <div class="actions">
+        <button id="add-btn" class="btn btn-primary" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          <span>Agregar a la cuadrícula</span>
+        </button>
+        <button id="tab-btn" class="btn" type="button">Nueva pestaña</button>
+      </div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

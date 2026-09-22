@@ -1,0 +1,68 @@
+:root {
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --radius: 16px;
+  --icon-size: 52px;
+  --spacing: 16px;
+  --columns: 5;
+
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-bg-alt: rgba(30, 41, 59, 0.55);
+  --card-border: rgba(255, 255, 255, 0.35);
+  --text: #0f172a;
+  --text-muted: #475569;
+  --overlay: rgba(15, 23, 42, 0.45);
+
+  --folder-bg: rgba(255, 255, 255, 0.12);
+  --folder-bg-hover: rgba(255, 255, 255, 0.17);
+  --folder-border: rgba(255, 255, 255, 0.18);
+  --folder-preview-bg: rgba(255, 255, 255, 0.1);
+  --folder-preview-item-bg: rgba(255, 255, 255, 0.16);
+  --folder-preview-empty-bg: rgba(255, 255, 255, 0.06);
+
+  --accent: #6366f1;
+  --accent-2: #8b5cf6;
+  --accent-3: #22d3ee;
+
+  --danger: #ef4444;
+  --success: #22c55e;
+  --toast-bg: rgba(15, 23, 42, 0.9);
+  --toast-text: #f8fafc;
+
+  --transparency: 0.9;
+  --blur: 8px;
+}
+
+[data-theme="dark"] {
+  --card-bg: rgba(24, 30, 46, 0.62);
+  --card-bg-alt: rgba(15, 23, 42, 0.6);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --overlay: rgba(2, 6, 23, 0.6);
+  --toast-bg: rgba(2, 6, 23, 0.85);
+  --toast-text: #f8fafc;
+
+  --folder-bg: rgba(255, 255, 255, 0.05);
+  --folder-bg-hover: rgba(255, 255, 255, 0.09);
+  --folder-border: rgba(255, 255, 255, 0.09);
+  --folder-preview-bg: rgba(255, 255, 255, 0.1);
+  --folder-preview-item-bg: rgba(255, 255, 255, 0.16);
+  --folder-preview-empty-bg: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] {
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-bg-alt: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(255, 255, 255, 0.5);
+  --text: #0f172a;
+  --text-muted: #475569;
+  --overlay: rgba(15, 23, 42, 0.35);
+
+  --folder-bg: rgba(255, 255, 255, 0.75);
+  --folder-bg-hover: rgba(255, 255, 255, 0.9);
+  --folder-border: rgba(255, 255, 255, 0.55);
+  --folder-preview-bg: rgba(255, 255, 255, 0.55);
+  --folder-preview-item-bg: rgba(255, 255, 255, 0.75);
+  --folder-preview-empty-bg: rgba(255, 255, 255, 0.4);
+}
