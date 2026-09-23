@@ -64,6 +64,7 @@ export const DEFAULT_WIDGETS = [
   { id: uid('wdg'), type: 'date', position: 1, enabled: true, config: { locale: 'es' } },
   { id: uid('wdg'), type: 'weather', position: 2, enabled: false, config: { location: '', units: 'metric' } },
   { id: uid('wdg'), type: 'calendar', position: 3, enabled: true, config: { locale: 'es' } },
+  { id: uid('wdg'), type: 'notes', position: 4, enabled: false, config: { text: '' } },
 ];
 
 export function defaultState() {

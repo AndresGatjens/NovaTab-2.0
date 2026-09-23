@@ -202,7 +202,7 @@ function findWeatherId() {
 export function renderWidgetForm({ widget, onSave } = {}) {
   if (!widget) return null;
   const cfg = { ...(widget.config || {}) };
-  const titles = { clock: 'Editar reloj', date: 'Editar fecha', weather: 'Editar clima', calendar: 'Editar calendario' };
+  const titles = { clock: 'Editar reloj', date: 'Editar fecha', weather: 'Editar clima', calendar: 'Editar calendario', notes: 'Editar notas / pendientes' };
   const title = titles[widget.type] ?? 'Editar widget';
 
   const body = el('div', 'widget-form');
@@ -282,9 +282,13 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     body.appendChild(unitsWrap);
   }
 
-  if (widget.type === 'date' || widget.type === 'calendar') {
+  if (widget.type === 'date' || widget.type === 'calendar' || widget.type === 'notes') {
     const note = el('p', 'settings-note');
-    note.textContent = widget.type === 'calendar' ? 'El widget de calendario no tiene ajustes adicionales (muestra el mes actual).' : 'El widget de fecha no tiene ajustes adicionales.';
+    note.textContent = widget.type === 'calendar'
+      ? 'El widget de calendario no tiene ajustes adicionales (muestra el mes actual).'
+      : (widget.type === 'notes'
+        ? 'Escribe directamente sobre el widget. El texto se guarda solo.'
+        : 'El widget de fecha no tiene ajustes adicionales.');
     body.appendChild(note);
   }
 

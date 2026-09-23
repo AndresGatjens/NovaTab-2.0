@@ -1,5 +1,28 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Widget de Notas / Pendientes
+
+- Nuevo widget tipo `notes`: un textarea editable dentro del widget. El texto se
+  guarda solo (debounce 400ms y en change) en `config.text`.
+- Se añade desde Configuración → Widgets → "Más widgets" → Notas / Pendientes.
+- El drag no se dispara al tocar el textarea (excluido `.notes-input`), permite
+  seleccionar/escribir. Escala con el marco si el widget se redimensiona
+  (`.sized .notes-input` con `cqmin`).
+- CSS `.notes`, `.notes-input`, `.widget-notes`. Título/nota en forms.js.
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
+## 2026-09-22 — El texto de los widgets se adapta al redimensionar
+
+- Al agrandar o reducir un widget, su contenido (reloj, clima, fecha,
+  calendario) ahora ESCALA con el marco usando container queries: `.widget.sized
+  { container-type: size }` y fuentes en unidades `cqmin`
+  (`clamp(12px, 40cqmin, 90px)` etc.). Con `overflow: hidden` el texto jamás se
+  sale del borde.
+- La clase `sized` se aplica al render si el widget ya tiene w/h guardados, y en
+  vivo al iniciar el resize (pointerdown). Estilos por tipo (reloj/clima
+  grandes, fecha/desc, calendario compacto).
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — Clima: temperatura centrada en el cuadro
 
 - La temperatura del widget de clima salía desplazada/de lado. Nueva regla

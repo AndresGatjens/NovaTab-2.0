@@ -331,6 +331,7 @@ export function openSettingsPanel(onClose) {
     const hidden = all.filter((w) => !w.enabled);
     const hasWeather = all.some((w) => w.type === 'weather');
     const hasCalendar = all.some((w) => w.type === 'calendar');
+    const hasNotes = all.some((w) => w.type === 'notes');
 
     if (visible.length) {
       host.appendChild(sectionTitle('Activos'));
@@ -353,6 +354,7 @@ export function openSettingsPanel(onClose) {
     const missing = [];
     if (!hasWeather) missing.push(['weather', 'Clima (Open-Meteo)']);
     if (!hasCalendar) missing.push(['calendar', 'Calendario']);
+    if (!hasNotes) missing.push(['notes', 'Notas / Pendientes']);
     if (missing.length) {
       host.appendChild(sectionTitle('Más widgets'));
       for (const [type, label] of missing) {
@@ -370,7 +372,7 @@ export function openSettingsPanel(onClose) {
   }
 
   function widgetLabel(type) {
-    return { clock: 'Reloj', date: 'Fecha', weather: 'Clima', calendar: 'Calendario' }[type] ?? type;
+    return { clock: 'Reloj', date: 'Fecha', weather: 'Clima', calendar: 'Calendario', notes: 'Notas / Pendientes' }[type] ?? type;
   }
 
   function buttonSmall(label, onClick) {

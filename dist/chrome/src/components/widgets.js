@@ -45,11 +45,13 @@ function renderWidget(widget, handlers) {
   if (cfg.units === 'imperial') node.dataset.units = 'imperial';
   if (typeof cfg.w === 'number' && cfg.w >= 90) node.style.width = `${cfg.w}px`;
   if (typeof cfg.h === 'number' && cfg.h >= 48) node.style.height = `${cfg.h}px`;
+  if (typeof cfg.w === 'number' && typeof cfg.h === 'number') node.classList.add('sized');
 
   if (widget.type === 'clock') renderClock(node, widget);
   else if (widget.type === 'date') renderDate(node, widget);
   else if (widget.type === 'weather') renderWeather(node, widget, handlers);
   else if (widget.type === 'calendar') renderCalendar(node, widget);
+  else if (widget.type === 'notes') renderNotes(node, widget);
 
   const toggle = el('button', 'widget-close');
   toggle.type = 'button';
@@ -121,7 +123,7 @@ function enableWidgetDrag(node, widget, handlers) {
 
   node.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('button')) return;
+    if (e.target.closest('button, .notes-input')) return;
     dragging = true;
     moved = false;
     startX = e.clientX;
@@ -180,7 +182,7 @@ function enableWidgetResize(node, widget, handle, handlers) {
     const rect = node.getBoundingClientRect();
     startW = rect.width;
     startH = rect.height;
-    node.classList.add('resizing');
+    node.classList.add('sized', 'resizing');
     if (handle.setPointerCapture) handle.setPointerCapture(e.pointerId);
   });
   handle.addEventListener('pointermove', (e) => {
@@ -323,4 +325,23 @@ function renderCalendar(node, widget) {
   }
   wrap.appendChild(grid);
   node.appendChild(wrap);
+}
+
+function renderNotes(node, widget) {
+  const wrap = el('div', 'notes');
+  const area = el('textarea', 'notes-input');
+  area.placeholder = 'Pendientes…';
+  area.value = widget.config?.text ?? '';
+  area.setAttribute('aria-label', 'Notas y pendientes');
+  area.addEventListener('input', () => {
+    clearTimeout(area._t);
+    area._t = setTimeout(() => {
+      updateWidget(widget.id, { config: { ...(widget.config || {}), text: area.value } });
+    }, 400);
+  });
+  area.addEventListener('change', () => {
+    updateWidget(widget.id, { config: { ...(widget.config || {}), text: area.value } });
+  });
+  node.appendChild(wrap);
+  wrap.appendChild(area);
 }

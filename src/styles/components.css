@@ -365,6 +365,73 @@
   backdrop-filter: blur(var(--blur, 8px));
   -webkit-backdrop-filter: blur(var(--blur, 8px));
   box-shadow: 0 12px 30px -12px rgba(2, 6, 23, 0.4);
+  overflow: hidden;
+}
+
+/* Widget redimensionado manualmente: el contenido se escala con el marco
+   (container queries) para que nunca se salga del borde. */
+.widget.sized {
+  container-type: size;
+  padding: 12px;
+}
+
+.widget.sized .clock-time,
+.widget.sized .weather-temp {
+  font-size: clamp(12px, 40cqmin, 90px);
+}
+
+.widget.sized .clock-date,
+.widget.sized .weather-desc {
+  font-size: clamp(9px, 14cqmin, 22px);
+  max-width: 100%;
+}
+
+.widget.sized .weather-setup {
+  font-size: clamp(9px, 12cqmin, 16px);
+  padding: 4px 8px;
+}
+
+.widget.sized .calendar {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.widget.sized .calendar-header {
+  font-size: clamp(10px, 12cqmin, 20px);
+}
+
+.widget.sized .calendar-weekday,
+.widget.sized .calendar-day {
+  font-size: clamp(8px, 9cqmin, 16px);
+}
+
+.widget.sized .calendar-week,
+.widget.sized .calendar-grid {
+  gap: 2px;
+}
+
+.widget.sized .calendar-day {
+  aspect-ratio: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.widget.sized.widget-calendar {
+  min-width: 0;
+  width: 100%;
+}
+
+.widget.sized .notes-input {
+  font-size: clamp(9px, 12cqmin, 22px);
+  padding: 4px 8px;
+}
+
+.widget.sized.widget-notes,
+.widget.sized .notes {
+  min-width: 0;
 }
 
 .widgets-layer .widget.floating {
@@ -542,6 +609,45 @@
 
 .widget-calendar {
   min-width: 250px;
+}
+
+/* ============ Notas / Pendientes ============ */
+.notes {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-notes {
+  min-width: 200px;
+  min-height: 150px;
+}
+
+.notes-input {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  resize: none;
+  border: none;
+  outline: none;
+  background: rgba(127, 127, 127, 0.08);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  font-family: inherit;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.notes-input:focus {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.notes-input::placeholder {
+  color: var(--text-muted);
 }
 
 /* ============ Modales ============ */
