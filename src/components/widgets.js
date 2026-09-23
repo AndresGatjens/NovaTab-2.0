@@ -319,56 +319,66 @@ function renderDate(node, widget) {
 
 function renderWeather(node, widget, handlers) {
   const config = widget.config || {};
+  const details = (Array.isArray(config.details) ? config.details : config.detail ? [config.detail] : ['desc']);
   const wrap = el('div', 'weather');
   if (!config.location) {
     const btn = el('button', 'weather-setup', t('widget.configure'));
     btn.type = 'button';
     btn.addEventListener('click', () => {
-      if (handlers.onWeatherConfig) handlers.onWeatherConfig(widget);
+      if (handlers.onEdit) handlers.onEdit(widget);
     });
     wrap.appendChild(btn);
-  } else {
-    const temp = el('div', 'weather-temp', '—');
-    const desc = el('div', 'weather-desc', t('weather.loading'));
-    wrap.appendChild(temp);
-    wrap.appendChild(desc);
-
-    const load = async () => {
-      try {
-        const w = await fetchWeather(config.location);
-        if (!w) {
-          temp.textContent = '—';
-          desc.textContent = t('weather.notFound');
-          return;
-        }
-        const imperial = config.units === 'imperial';
-        const displayTemp = (c) => imperial ? Math.round((c * 9 / 5) + 32) : Math.round(c);
-        const displaySpeed = (kmh) => imperial ? Math.round(kmh / 1.609) : Math.round(kmh);
-        const unit = imperial ? '°F' : '°C';
-        const speedUnit = imperial ? 'mph' : 'km/h';
-        temp.textContent = `${displayTemp(w.temp)}${unit}`;
-        const place = w.place !== config.location.trim() ? w.place : '';
-        const detail = config.detail || 'desc';
-        if (detail === 'wind') {
-          desc.textContent = `${t('weather.wind')}: ${displaySpeed(w.wind)} ${speedUnit}`;
-        } else if (detail === 'humidity') {
-          desc.textContent = `${t('weather.humidity')}: ${w.humidity}%`;
-        } else if (detail === 'feels') {
-          desc.textContent = `${t('weather.feels')}: ${displayTemp(w.feels ?? w.temp)}${unit}`;
-        } else {
-          desc.textContent = `${weatherLabel(w.code)}${place ? ` · ${place}` : ''}`;
-        }
-        desc.title = `${weatherLabel(w.code)} · ${t('weather.feels')} ${displayTemp(w.feels ?? w.temp)}${unit} · ${t('weather.humidity')} ${w.humidity}% · ${t('weather.wind')} ${displaySpeed(w.wind)} ${speedUnit}`;
-      } catch {
-        temp.textContent = '—';
-        desc.textContent = t('weather.offline');
-      }
-    };
-    load();
-    // Refresca cada 10 minutos (acorde al caché del servicio).
-    setInterval(load, 600000);
+    node.appendChild(wrap);
+    return;
   }
+  const temp = el('div', 'weather-temp', '—');
+  const lines = el('div', 'weather-lines');
+  wrap.appendChild(temp);
+  wrap.appendChild(lines);
   node.appendChild(wrap);
+
+  const load = async () => {
+    try {
+      const w = await fetchWeather(config.location);
+      if (!w) {
+        temp.textContent = '—';
+        lines.textContent = t('weather.notFound');
+        return;
+      }
+      const imperial = config.units === 'imperial';
+      const displayTemp = (c) => imperial ? Math.round((c * 9 / 5) + 32) : Math.round(c);
+      const displaySpeed = (kmh) => imperial ? Math.round(kmh / 1.609) : Math.round(kmh);
+      const unit = imperial ? '°F' : '°C';
+      const speedUnit = imperial ? 'mph' : 'km/h';
+      temp.textContent = `${displayTemp(w.temp)}${unit}`;
+      lines.innerHTML = '';
+      const place = w.place !== config.location.trim() ? w.place : '';
+      const row = (text) => {
+        const d = el('div', 'weather-line');
+        d.textContent = text;
+        lines.appendChild(d);
+      };
+      if (details.includes('desc')) {
+        row(`${weatherLabel(w.code)}${place ? ` · ${place}` : ''}`);
+      }
+      if (details.includes('feels')) {
+        row(`${t('weather.feels')}: ${displayTemp(w.feels ?? w.temp)}${unit}`);
+      }
+      if (details.includes('wind')) {
+        row(`${t('weather.wind')}: ${displaySpeed(w.wind)} ${speedUnit}`);
+      }
+      if (details.includes('humidity')) {
+        row(`${t('weather.humidity')}: ${w.humidity}%`);
+      }
+      wrap.title = `${weatherLabel(w.code)} · ${t('weather.feels')} ${displayTemp(w.feels ?? w.temp)}${unit} · ${t('weather.humidity')} ${w.humidity}% · ${t('weather.wind')} ${displaySpeed(w.wind)} ${speedUnit}`;
+    } catch {
+      temp.textContent = '—';
+      lines.textContent = t('weather.offline');
+    }
+  };
+  load();
+  // Refresca cada 10 minutos (acorde al caché del servicio).
+  setInterval(load, 600000);
 }
 
 const WEEKDAYS_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];

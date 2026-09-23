@@ -170,35 +170,6 @@ export function renderFolderForm({ folder = null, onSave }) {
   return modal;
 }
 
-/** Formulario de configuración del widget de clima (Open-Meteo, gratis). */
-export function renderWeatherForm({ widget = null, onSave } = {}) {
-  const title = t('widget.configure');
-  const locationField = field({ label: t('weatherForm.city'), value: widget?.config?.location ?? '' });
-
-  const saveBtn = button(t('siteForm.save'), async () => {
-    await updateWidget(widget?.id ?? findWeatherId(), {
-      config: { location: locationField.input.value.trim() },
-    });
-    toast(t('weatherForm.configured'));
-    modal.dispose();
-    onSave?.();
-  }, 'primary');
-
-  const cancelBtn = button(t('siteForm.cancel'), () => modal.dispose());
-  const body = el('div');
-  body.appendChild(locationField.wrap);
-  const hint = el('p', 'privacy-note', t('weatherForm.hint'));
-  body.appendChild(hint);
-
-  const modal = openModal({ title, body, actions: [cancelBtn, saveBtn] });
-  return modal;
-}
-
-function findWeatherId() {
-  const w = store.get().widgets.find((w) => w.type === 'weather');
-  return w ? w.id : '';
-}
-
 /** Formulario para editar la configuración de un widget (reloj, clima). */
 export function renderWidgetForm({ widget, onSave } = {}) {
   if (!widget) return null;
@@ -213,7 +184,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
   let clockAmpm = true;
   let weatherLocation = '';
   let weatherUnits = 'metric';
-  let weatherDetail = 'desc';
+  let weatherDetails = ['desc'];
   let dateFormat = 'full';
 
   // Formato del reloj.
@@ -254,10 +225,11 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     body.appendChild(ampmRow);
   }
 
-  // Clima: ubicación, unidades y detalle.
+  // Clima: ubicación, unidades y detalles (mostrar varios a la vez).
   if (widget.type === 'weather') {
     weatherLocation = cfg.location ?? '';
     weatherUnits = cfg.units === 'imperial' ? 'imperial' : 'metric';
+    weatherDetails = Array.isArray(cfg.details) ? cfg.details.slice() : (cfg.detail ? [cfg.detail] : ['desc']);
 
     const locField = field({ label: t('weatherForm.city'), value: weatherLocation });
     body.appendChild(locField.wrap);
@@ -284,26 +256,38 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     unitsWrap.appendChild(unitsSeg);
     body.appendChild(unitsWrap);
 
+    // Detalles que se muestran a la vez (marcados con checkbox).
     const detailWrap = el('div', 'settings-row');
     detailWrap.appendChild(el('span', 'settings-label', t('widget.weather.detail')));
-    const detailSeg = el('div', 'seg');
-    weatherDetail = cfg.detail || 'desc';
-    const makeD = (v, label) => {
-      const b = el('button', 'seg-btn', label);
-      b.type = 'button';
-      if (weatherDetail === v) b.classList.add('active');
-      b.addEventListener('click', () => {
-        weatherDetail = v;
-        detailSeg.querySelectorAll('.seg-btn').forEach((x) => x.classList.remove('active'));
-        b.classList.add('active');
+    const checks = el('div', 'seg seg-checks');
+    const opts = [
+      ['desc', t('widget.weather.desc')],
+      ['wind', t('weather.wind')],
+      ['humidity', t('weather.humidity')],
+      ['feels', t('weather.feels')],
+    ];
+    for (const [v, label] of opts) {
+      const item = el('label', 'seg-btn seg-check');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = weatherDetails.includes(v);
+      cb.addEventListener('change', () => {
+        if (cb.checked) {
+          if (!weatherDetails.includes(v)) weatherDetails.push(v);
+        } else {
+          weatherDetails = weatherDetails.filter((x) => x !== v);
+          if (!weatherDetails.length) {
+            cb.checked = true;
+            weatherDetails.push(v);
+          }
+        }
       });
-      return b;
-    };
-    detailSeg.appendChild(makeD('desc', t('widget.weather.desc')));
-    detailSeg.appendChild(makeD('wind', t('weather.wind')));
-    detailSeg.appendChild(makeD('humidity', t('weather.humidity')));
-    detailSeg.appendChild(makeD('feels', t('weather.feels')));
-    detailWrap.appendChild(detailSeg);
+      const txt = el('span', 'seg-check-label', label);
+      item.appendChild(cb);
+      item.appendChild(txt);
+      checks.appendChild(item);
+    }
+    detailWrap.appendChild(checks);
     body.appendChild(detailWrap);
   }
 
@@ -380,7 +364,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     if (widget.type === 'weather') {
       merged.location = (locInput && typeof locInput.value === 'string' ? locInput.value : weatherLocation).trim();
       merged.units = weatherUnits;
-      merged.detail = weatherDetail;
+      merged.details = [...weatherDetails];
     }
     if (widget.type === 'date') {
       merged.format = dateFormat;

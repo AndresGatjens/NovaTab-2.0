@@ -20,7 +20,7 @@ import {
   renameFolder,
   removeFolder,
 } from '../services/folders.js';
-import { renderSiteForm, renderFolderForm, renderWeatherForm, renderIconForm, renderWidgetForm } from './forms.js';
+import { renderSiteForm, renderFolderForm, renderIconForm, renderWidgetForm } from './forms.js';
 import { normalizeUrl } from '../utils/url.js';
 import { openBookmark, openSearch } from './openers.js';
 import { el } from '../utils/dom.js';
@@ -166,7 +166,6 @@ class NewTabApp {
         this.renderWidgets();
       },
       onEdit: (widget) => this.renderWidgetForm(widget),
-      onWeatherConfig: (widget) => this.renderWeatherForm({ widget }),
       onDrop: async (widget, x, y) => {
         await updateWidget(widget.id, {
           config: { ...(widget.config || {}), x: Math.round(x), y: Math.round(y) },
@@ -398,9 +397,7 @@ class NewTabApp {
     });
   }
 
-  renderWeatherForm() {
-    renderWeatherForm({ onSave: () => this.renderWidgets() });
-  }
+  
 
   onGridDragOver(e) {
     e.preventDefault();

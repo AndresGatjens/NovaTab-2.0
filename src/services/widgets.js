@@ -42,7 +42,7 @@ export function defaultConfig(type) {
     case 'date':
       return { format: 'full' };
     case 'weather':
-      return { location: '', units: 'metric', detail: 'desc' };
+      return { location: '', units: 'metric', details: ['desc'] };
     case 'calendar':
       return {};
     case 'notes':
