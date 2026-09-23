@@ -1,5 +1,14 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Calendario compacto
+
+- El widget de calendario se veía "exagerado muy grande": meses con
+  `min-height: 200px` y días con `aspect-ratio: 1` hacían crecer el widget.
+- Ahora compacto: días con altura fija 30px, gaps 3px, cabecera 15px, días
+  13px, `min-width` del widget 240px, sin `min-height`. El modo redimensionado
+  mantiene celdas compactas (`height: auto` + padding).
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — Texto de los widgets: más grande y con presencia
 
 - El texto de los widgets se veía "super chiquito y sin presencia". Causas:

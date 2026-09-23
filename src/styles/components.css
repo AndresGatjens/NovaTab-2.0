@@ -394,17 +394,16 @@
 .widget.sized .calendar {
   min-width: 0;
   min-height: 0;
-  height: 100%;
   justify-content: space-between;
 }
 
 .widget.sized .calendar-header {
-  font-size: clamp(13px, 16cqmin, 24px);
+  font-size: clamp(13px, 16cqmin, 20px);
 }
 
 .widget.sized .calendar-weekday,
 .widget.sized .calendar-day {
-  font-size: clamp(10px, 11cqmin, 18px);
+  font-size: clamp(10px, 11cqmin, 15px);
 }
 
 .widget.sized .calendar-week,
@@ -413,6 +412,7 @@
 }
 
 .widget.sized .calendar-day {
+  height: auto;
   aspect-ratio: auto;
   min-width: 0;
   min-height: 0;
@@ -555,16 +555,16 @@
 .calendar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  min-width: 220px;
-  min-height: 200px;
+  min-width: 0;
+  min-height: 0;
   user-select: none;
   -webkit-user-select: none;
 }
 
 .calendar-header {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   text-align: center;
   color: var(--text);
@@ -575,11 +575,11 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 3px;
 }
 
 .calendar-weekday {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
   color: var(--text-muted);
@@ -588,8 +588,8 @@
 .calendar-day {
   display: grid;
   place-items: center;
-  aspect-ratio: 1;
-  font-size: 14px;
+  height: 30px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
   border-radius: 8px;
@@ -608,7 +608,7 @@
 }
 
 .widget-calendar {
-  min-width: 250px;
+  min-width: 240px;
 }
 
 /* ============ Notas / Pendientes ============ */
