@@ -1,5 +1,26 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Carpetas e iconos se mezclan libremente en el grid (revueltos)
+
+- NUEVO orden global del grid raíz: `gridOrder`, un array que mezcla carpetas e
+  iconos en UNA sola secuencia (`folder:<id>` / `bookmark:<id>`). El usuario
+  puede dejar carpetas entre iconos e iconos entre carpetas, como los acomode.
+- Nuevo servicio `src/services/tiles.js`: `getRootTileKeys()`, `getRootItems()`,
+  `reorderRootTile()`, `insertRootTile()`, `removeRootTile()`, `rootTileIndex()`.
+  Si `gridOrder` no existe o está vacío, mantiene el orden clásico (carpetas
+  primero, luego iconos) y rellena los tiles nuevos al final.
+- `renderGrid` ahora intercala carpetas e iconos desde `getRootItems()` (ya no
+  las separa con carpetas primero).
+- DnD en la vista raíz usa el orden global: soltar un tile sobre otro lo
+  recoloca en esa posición; soltar sobre una carpeta sigue metiéndolo DENTRO de
+  esa carpeta. Soltar sobre hueco vacío lo mueve a la página/ventana destino.
+- Crear carpeta o icono nuevo en raíz lo inserta en `gridOrder` en la página
+  visible. Eliminar o mover a carpeta quita el tile del orden.
+- `store.js` (`gridOrder` en defaults + sanitize), `import-export.js` (exporta e
+  importa `gridOrder`).
+- Nuevo test `tests/tiles.test.js` (4 tests del orden mezclado). Total 16 tests
+  OK. Rebuild → dist/chrome (43 archivos, incluye tiles.js).
+
 ## 2026-09-22 — Iconos y carpetas arrastrables entre ventanas del grid
 
 - `onEmptyDrop` ahora reordena TAMBIÉN los favoritos (no solo carpetas) hacia la

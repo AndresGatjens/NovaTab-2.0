@@ -71,5 +71,6 @@ export function defaultState() {
     folders: structuredClone(DEFAULT_FOLDERS),
     bookmarks: structuredClone(DEFAULT_BOOKMARKS),
     widgets: structuredClone(DEFAULT_WIDGETS),
+    gridOrder: [],
   };
 }

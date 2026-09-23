@@ -7,7 +7,7 @@ import { mergeDefaults } from '../utils/dom.js';
 const EXPORT_VERSION = 1;
 
 export function buildExportPayload() {
-  const { settings, folders, bookmarks, widgets } = store.get();
+  const { settings, folders, bookmarks, widgets, gridOrder } = store.get();
   return {
     meta: {
       app: 'novantab',
@@ -18,6 +18,7 @@ export function buildExportPayload() {
     folders,
     bookmarks,
     widgets,
+    gridOrder,
   };
 }
 
@@ -68,6 +69,7 @@ export async function applyImport(data) {
     folders: Array.isArray(data.folders) ? data.folders : base.folders,
     bookmarks: Array.isArray(data.bookmarks) ? data.bookmarks : base.bookmarks,
     widgets: Array.isArray(data.widgets) ? data.widgets : base.widgets,
+    gridOrder: Array.isArray(data.gridOrder) ? data.gridOrder : base.gridOrder,
   };
   await store.replace(imported);
   return imported;

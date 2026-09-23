@@ -19,7 +19,6 @@ import {
   addFolder,
   renameFolder,
   removeFolder,
-  reorderFolder,
   topLevelFolders,
 } from '../services/folders.js';
 import { renderSiteForm, renderFolderForm, renderWeatherForm, renderIconForm, renderWidgetForm } from './forms.js';
@@ -28,6 +27,12 @@ import { openBookmark, openSearch } from './openers.js';
 import { el } from '../utils/dom.js';
 import { bookmarksInFolder } from '../services/bookmarks.js';
 import { findFolder } from '../services/folders.js';
+import {
+  rootTileIndex,
+  reorderRootTile,
+  insertRootTile,
+  removeRootTile,
+} from '../services/tiles.js';
 
 /** Controlador principal de la extensión. */
 class NewTabApp {
@@ -286,6 +291,7 @@ class NewTabApp {
 
   async moveToFolder(bm, folderId) {
     await moveBookmark(bm.id, folderId);
+    await removeRootTile('bookmark', bm.id);
     hideContextMenu();
     this.renderGrid();
     this.renderWidgets();
@@ -299,6 +305,7 @@ class NewTabApp {
   async removeSite(bm) {
     hideContextMenu();
     await removeBookmark(bm.id);
+    await removeRootTile('bookmark', bm.id);
     this.renderGrid();
     toast('Favorito eliminado');
   }
@@ -306,6 +313,7 @@ class NewTabApp {
   async removeFolderAction(folder) {
     hideContextMenu();
     await removeFolder(folder.id);
+    await removeRootTile('folder', folder.id);
     if (this.currentFolderId === folder.id) this.currentFolderId = null;
     this.renderGrid();
     toast('Carpeta eliminada (los favoritos quedaron en el nivel superior)');
@@ -323,12 +331,16 @@ class NewTabApp {
           });
           toast('Favorito actualizado');
         } else {
-          await addBookmark({
+          const bm = await addBookmark({
             title: form.title,
             url: form.url,
             icon: form.icon,
             folderId: this.currentFolderId ?? null,
           });
+          if (this.currentFolderId == null) {
+            const per = Math.max(1, (store.getSettings().gridColumns || 5) * (store.getSettings().gridRows || 4));
+            await insertRootTile('bookmark', bm.id, currentPage(this.gridHost) * per);
+          }
           toast('Favorito añadido');
         }
         this.renderGrid();
@@ -355,10 +367,9 @@ class NewTabApp {
           await renameFolder(folder.id, title);
           toast('Carpeta renombrada');
         } else {
-          const s = store.getSettings();
-          const per = Math.max(1, (s.gridColumns || 5) * (s.gridRows || 4));
-          const pos = currentPage(this.gridHost) * per;
-          await addFolder(title, null, pos);
+          const per = Math.max(1, (store.getSettings().gridColumns || 5) * (store.getSettings().gridRows || 4));
+          const folder = await addFolder(title, null, 0);
+          await insertRootTile('folder', folder.id, currentPage(this.gridHost) * per);
           toast('Carpeta creada');
         }
         this.renderGrid();
@@ -389,33 +400,27 @@ class NewTabApp {
     if (!src) return;
     document.querySelectorAll('.drop-target').forEach((c) => c.classList.remove('drop-target'));
 
-    if (src.type === 'bookmark') {
-      const sourceId = src.data.id;
-      if (targetItem.type === 'folder') {
-        // Mover el favorito a la carpeta destino.
-        if ((src.fromFolder ?? null) !== targetItem.data.id) {
-          await moveBookmark(sourceId, targetItem.data.id);
-          toast(`Movido a "${targetItem.data.title}"`);
-        }
-      } else {
-        // Reordenar dentro de la misma carpeta.
-        const folderId = src.fromFolder === 'root' ? null : src.fromFolder;
-        const sameFolder = (targetCard.dataset.folder ?? 'root') === (src.fromFolder ?? 'root');
-        if (sameFolder) {
-          const grid = targetCard.parentElement;
-          const cards = [...grid.querySelectorAll('.card[data-kind]')];
-          const draggedCard = cards.find((c) => c.dataset.id === sourceId);
-          const siblings = cards.filter((c) => (c.dataset.folder ?? 'root') === (src.fromFolder ?? 'root'));
-          const targetIndex = siblings.indexOf(targetCard);
-          const currentIndex = siblings.indexOf(draggedCard);
-          const insertAt = currentIndex < targetIndex ? targetIndex : targetIndex;
-          await reorderBookmark(sourceId, insertAt, folderId);
-        }
+    if (this.currentFolderId != null) {
+      // Vista de carpeta: solo hay favoritos de la misma carpeta.
+      const targetIndex = [...targetCard.parentElement.querySelectorAll('.card[data-kind]')].indexOf(targetCard);
+      await reorderBookmark(src.data.id, targetIndex, this.currentFolderId);
+      this.refreshAfterDrop();
+      return;
+    }
+
+    // Vista raíz: orden global mezclado (carpetas e iconos en la misma secuencia).
+    if (src.type === 'bookmark' && targetItem.type === 'folder') {
+      // Soltar un icono SOBRE una carpeta lo mete dentro de esa carpeta.
+      if ((src.fromFolder ?? null) !== targetItem.data.id) {
+        await moveBookmark(src.data.id, targetItem.data.id);
+        await removeRootTile('bookmark', src.data.id);
+        toast(`Movido a "${targetItem.data.title}"`);
       }
-    } else if (src.type === 'folder' && targetItem.type === 'folder') {
-      const folders = topLevelFolders();
-      const targetIndex = folders.findIndex((f) => f.id === targetItem.data.id);
-      await reorderFolder(src.data.id, targetIndex);
+    } else {
+      // Reordena el tile arrastrado a la posición del tile destino (se pueden mezclar).
+      const targetIndex = rootTileIndex(targetItem.type, targetItem.data.id);
+      await reorderRootTile(src.type, src.data.id, targetIndex);
+      toast('Movido');
     }
     this.refreshAfterDrop();
   }
@@ -429,34 +434,31 @@ class NewTabApp {
     const src = this.dragItem;
     if (!src) return;
     const per = Math.max(1, (store.getSettings().gridColumns || 5) * (store.getSettings().gridRows || 4));
+    const targetIndex = pageIndex * per;
 
+    if (this.currentFolderId != null) {
+      // Vista de carpeta: reordenar el icono dentro de la misma carpeta hacia la página destino.
+      await reorderBookmark(src.data.id, targetIndex, this.currentFolderId);
+      this.renderGrid();
+      toast('Icono movido');
+      return;
+    }
     if (src.type === 'folder') {
-      await reorderFolder(src.data.id, pageIndex * per);
+      await reorderRootTile('folder', src.data.id, targetIndex);
       this.renderGrid();
       toast('Carpeta movida');
       return;
     }
-
-    const inFolder = this.currentFolderId;
-    const fromFolder = src.fromFolder === 'root' ? null : src.fromFolder;
-    if (inFolder != null) {
-      // Vista de carpeta: reordenar el icono dentro de la misma carpeta hacia la página destino.
-      await reorderBookmark(src.data.id, pageIndex * per, inFolder);
+    // Favorito en la raíz
+    if ((src.fromFolder ?? 'root') === 'root') {
+      await reorderRootTile('bookmark', src.data.id, targetIndex);
       this.renderGrid();
       toast('Icono movido');
       return;
     }
-    if (fromFolder == null) {
-      // Raíz → raíz: reordenar el icono en la página destino (los bookmarks van tras las carpetas).
-      const offset = topLevelFolders().length;
-      await reorderBookmark(src.data.id, Math.max(0, pageIndex * per - offset));
-      this.renderGrid();
-      toast('Icono movido');
-      return;
-    }
-    // Carrera de otra carpeta → raíz, colocado en la página destino.
+    // Favorito que viene de otra carpeta: sacarlo a la raíz en la página destino.
     await moveBookmark(src.data.id, null);
-    await reorderBookmark(src.data.id, Math.max(0, pageIndex * per - topLevelFolders().length));
+    await insertRootTile('bookmark', src.data.id, targetIndex);
     this.renderGrid();
     toast('Movido a la cuadrícula');
   }

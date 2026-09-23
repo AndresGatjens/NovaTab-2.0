@@ -1,7 +1,7 @@
 import { el, clearNode } from '../utils/dom.js';
 import { store } from '../storage/store.js';
-import { topLevelFolders } from '../services/folders.js';
 import { bookmarksInFolder } from '../services/bookmarks.js';
+import { getRootItems } from '../services/tiles.js';
 import { resolveFaviconSource, generatedFaviconDataUrl, markFaviconStatus } from '../services/favicon.js';
 
 /** Crea una tarjeta de marcador (cuadrícula y carpetas). */
@@ -215,22 +215,10 @@ function renderPages(container, pages, buildCard, handlers) {
   return host;
 }
 
-/** Renderiza la cuadrícula principal (favoritos raíz + carpetas). */
+/** Renderiza la cuadrícula principal (favoritos y carpetas mezclados en el orden del usuario). */
 export function renderGrid(container, handlers) {
   clearNode(container);
-  const folders = topLevelFolders();
-  const bookmarks = bookmarksInFolder(null);
-
-  let position = 0;
-  const items = [];
-  for (const folder of folders) {
-    items.push({ type: 'folder', data: folder, position });
-    position++;
-  }
-  for (const bm of [...bookmarks].sort((a, b) => a.position - b.position)) {
-    items.push({ type: 'bookmark', data: bm, position });
-    position++;
-  }
+  const items = getRootItems();
 
   return renderPages(
     container,

@@ -38,6 +38,7 @@ class Store {
       folders: Array.isArray(raw.folders) ? raw.folders : base.folders,
       bookmarks: Array.isArray(raw.bookmarks) ? raw.bookmarks : base.bookmarks,
       widgets: Array.isArray(raw.widgets) ? raw.widgets : base.widgets,
+      gridOrder: Array.isArray(raw.gridOrder) ? raw.gridOrder : base.gridOrder,
     };
     return out;
   }
