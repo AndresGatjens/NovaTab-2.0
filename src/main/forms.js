@@ -186,6 +186,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
   let weatherUnits = 'metric';
   let weatherDetails = ['desc'];
   let dateFormat = 'full';
+  let locInput = null;
 
   // Formato del reloj.
   if (widget.type === 'clock') {
@@ -233,7 +234,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
 
     const locField = field({ label: t('weatherForm.city'), value: weatherLocation });
     body.appendChild(locField.wrap);
-    const locInput = locField.input;
+    locInput = locField.input;
 
     const unitsWrap = el('div', 'settings-row');
     unitsWrap.appendChild(el('span', 'settings-label', t('widget.weather.units')));
