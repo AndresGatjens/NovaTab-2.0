@@ -1,84 +1,99 @@
-# Novantab
+<div align="center">
 
-Extensión de **nueva pestaña** moderna, rápida y privada para Firefox, Chrome,
-Chromium y navegadores compatibles con Manifest V3. Reemplaza la página de
-"Nueva pestaña" con una interfaz personalizable: búsqueda, favoritos, carpetas,
-widgets y configuración local.
+# Novantab 2.0
 
-> Inspirada en el concepto de "New Tab" moderno (sin copiar ningún producto).
-> Diseño de referencia de estética UI: [uiverse.io/elements](https://uiverse.io/elements).
+**Nueva pestaña privada para tu navegador**
+
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-236ad3?logo=google-chrome&logoColor=white&labelColor=555)](https://developer.chrome.com/docs/extensions/develop/migrate)
+[![Chrome](https://img.shields.io/badge/Chrome%20%2F%20Chromium-OK-4285F4?logo=google-chrome&logoColor=white&labelColor=555)]()
+[![Firefox](https://img.shields.io/badge/Firefox%20%2F%20IceRaven-OK-FF7139?logo=firefox&logoColor=white&labelColor=555)]()
+[![Private](https://img.shields.io/badge/100%25%20local-no%20tracking-green?labelColor=555)]()
+[![License MIT](https://img.shields.io/badge/License-MIT-blue?labelColor=555)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.0.0-8b5cf6?labelColor=555)]()
+[![Node](https://img.shields.io/badge/Node-%E2%89%A5%2018-339933?logo=node.js&logoColor=white&labelColor=555)]()
+
+Reemplaza la página de "Nueva pestaña" por una interfaz **moderna, rápida y 100 % privada**:
+búsqueda, favoritos, carpetas, widgets y personalización completa. Todo se guarda
+en `storage.local` de tu navegador — sin servidores, sin analítica, sin tracking.
+
+</div>
 
 ---
 
-## Características
+## ✨ Características
 
 - 🔍 **Barra de búsqueda** con motor configurable: Google, Bing, DuckDuckGo,
   Brave Search, Ecosia o **motor personalizado** (`{query}` de plantilla).
 - 📌 **Cuadrícula de favoritos**: añadir, editar, eliminar, reordenar,
-  arrastrar y soltar, icono personalizado.
+  arrastrar y soltar, con icono personalizado.
 - 📁 **Carpetas**: crear, renombrar, eliminar; mover sitios dentro, fuera y
-  entre carpetas; reordenar carpetas; abrir su contenido en un modal.
+  entre carpetas; abrir su contenido en un modal.
+- ⏱️ **Widgets**: reloj (12/24 h con AM/PM), fecha y clima. Posición libre
+  (arrastrar donde quieras) y **redimensionado manual** de esquina, estilo Android.
 - 🖱️ **Drag & Drop** fluido con indicador visual de destino.
 - 🎨 **Personalización**: tema (claro/oscuro/auto), fondo (color, gradiente,
   imagen local o por URL), transparencia, desenfoque, radio, tamaño de iconos,
-  número de columnas, mostar/ocultar nombres y favicons.
-- ⏱️ **Widgets**: reloj, fecha y **clima** (clima dejado preparado, sin API por
-  privacidad). Todos pueden mostrarse, ocultarse y configurarse.
-- 🔒 **100% local**: los datos viven en `storage.local`. Sin analítica, sin
+  número de columnas, mostrar/ocultar nombres y favicons.
+- 🔒 **100 % local**: los datos viven en `storage.local`. Sin analítica, sin
   tracking, sin historial, sin servidores.
 - 💾 **Importar/Exportar** la configuración en JSON (con validación).
-- ⌨️ **Accesibilidad y atajos**: navegación por teclado, ARIA, focus visible,
+- ⌨️ **Accesible y con atajos**: navegación por teclado, ARIA, focus visible,
   `Ctrl+K`, `Ctrl+Shift+A`, `Ctrl+Shift+F`, `Escape`.
 
 ---
 
-## Instalación (versiones ya compiladas)
+## 🤖 ¿Cómo se ve?
 
-El build genera dos carpetas listas para instalar:
+Abre una nueva pestaña y listo. La extensión sobrescribe la página de "Nueva
+pestaña" de forma nativa (`chrome_url_overrides.newtab`), así que no necesitas
+pinchar en ningún botón: cada pestaña nueva ya es **Novantab**.
+
+---
+
+## 📦 Instalación (versiones compiladas)
+
+El repo incluye los builds listos para instalar:
 
 | Carpeta          | Navegador                                        |
 | ---------------- | ------------------------------------------------ |
-| `dist/chrome/`   | Chrome, Chromium, Brave, Edge y derivados MV3    |
+| `dist/chrome/`   | Chrome, Chromium, Brave, Edge, Quetta (Android)  |
 | `dist/firefox/`  | Firefox, IceRaven, LibreWolf y derivados         |
 
-### Chrome / Chromium / Quetta
+### Chrome / Chromium / Brave / Edge / Quetta
 
-1. Abre `chrome://extensions` (Chromium: `chrome://extensions`).
+1. Abre `chrome://extensions`.
 2. Activa el **modo desarrollador** (interruptor arriba a la derecha).
 3. Pulsa **"Cargar descomprimida"**.
 4. Selecciona la carpeta `dist/chrome/`.
 5. Abre una **nueva pestaña** para ver la extensión.
 
-> En Android con **Quetta**: activa "Permitir extensiones", carga la carpeta o
-> el .zip de `dist/chrome/` desde Ajustes de extensiones, y usa una pestaña
-> nueva para verla.
+> En Android con **Quetta**: activa "Permitir extensiones" y carga la carpeta
+> (o un `.zip` de `dist/chrome/`) desde los Ajustes de extensiones.
 
 ### Firefox / IceRaven
 
 1. Abre `about:debugging#/runtime/this-firefox`.
 2. Pulsa **"Cargar extensión temporal…"**.
-3. Selecciona el archivo `dist/firefox/manifest.json`.
+3. Selecciona `dist/firefox/manifest.json`.
 4. Abre una **nueva pestaña**.
 
-Para instalación permanente en Firefox:
-
-1. Comprime el contenido de `dist/firefox/` en un `.zip`.
-2. Instala la extensión desde `about:addons` → engranaje → "Instalar desde archivo…".
-   - Firma requerida para publicación oficial (AMO); para uso propio funciona
-     con "instalar extensión temporal" o Firefox Developer Edition/Nightly.
+> Para instalación permanente en Firefox: comprime `dist/firefox/` en `.zip` y
+> usa `about:addons` → engranaje → "Instalar desde archivo…". La publicación
+> oficial en AMO requiere firma; para uso personal sirve la opción temporal o
+> Developer Edition/Nightly.
 
 ---
 
-## Build del proyecto
+## 🔨 Build desde el código
 
-Requisitos: **Node.js ≥ 18**. Sin dependencias externas (script propio, zlib nativo).
+Requisitos: **Node.js ≥ 18**. Sin dependencias externas (script propio).
 
 ```bash
-npm run icons        # regenera los iconos PNG (opcional)
-npm run build        # genera dist/chrome y dist/firefox
-npm run build:chrome # solo Chrome/Chromium
-npm run build:firefox# solo Firefox/IceRaven
-npm test             # ejecuta los tests (validación de URLs e import/export)
+npm run icons          # regenera los iconos PNG (opcional)
+npm run build          # genera dist/chrome y dist/firefox
+npm run build:chrome   # solo Chrome/Chromium
+npm run build:firefox  # solo Firefox/IceRaven
+npm test               # ejecuta los tests (URLs e import/export)
 ```
 
 Salida:
@@ -91,7 +106,7 @@ dist/
 
 ---
 
-## Estructura
+## 🗂️ Estructura
 
 ```
 browser-newtab/
@@ -100,55 +115,57 @@ browser-newtab/
 │   ├── components/          # search-bar, grid, modal, context-menu, settings…
 │   ├── main/                # bootstrap, index (orquestador), forms, openers
 │   ├── pages/newtab/        # newtab.html + main.css
-│   ├── services/            # bookmarks, folders, settings, widgets, favicon, import-export
+│   ├── services/            # bookmarks, folders, settings, widgets, favicon…
 │   ├── storage/             # browser-api (wrapper) + store (persistencia)
 │   ├── styles/              # variables, base, components (temas CSS)
 │   └── utils/               # id, url, dom
 ├── public/icons/            # iconos generados (script propio, sin deps)
 ├── tests/                   # node --test
 ├── scripts/                 # build.mjs, icons.mjs
+├── dist/                    # salidas listas para instalar (Chrome + Firefox)
 ├── manifest.chrome.json
 ├── manifest.firefox.json
-├── package.json
-└── dist/                    # salidas listas para instalar
+└── package.json
 ```
 
-## Capa multiplataforma
+### Capa multiplataforma
 
 El wrapper `src/storage/browser-api.js` detecta `browser.*` (Firefox/IceRaven)
 o `chrome.*` (Chromium) y normaliza `storage.local` a Promesas, de modo que toda
 la app usa `browserAPI.storage.get/set`. No hay lógica duplicada por navegador:
 el único cambio entre builds es el `manifest.json`.
 
-## Privacidad
+---
 
-- Todos los favoritos, carpetas, widgets y ajustes se guardan en
-  `storage.local` del navegador.
-- No se envía nada a servidores externos (salvo el favicon del propio sitio que
-  solicita el usuario, y la búsqueda/web que el usuario pida).
-- El widget de clima está **deshabilitado por defecto** y no realiza peticiones
-  hasta que se integre la API.
-- No hay analítica, ni publicidad, ni recopilación de historial.
+## 🔐 Privacidad
 
-## Atajos de teclado
+- Todos los favoritos, carpetas, widgets y ajustes se guardan en `storage.local`.
+- No se envía nada a servidores externos (salvo lo que el usuario pida: el
+  favicon del propio sitio y la búsqueda/web que se realice).
+- El widget de clima está **deshabilitado por defecto**.
+- Sin analítica, sin publicidad, sin recopilación de historial.
 
-| Atajo             | Acción                |
-| ----------------- | --------------------- |
-| `Ctrl+K` / `Cmd+K`| Enfocar búsqueda      |
-| `Ctrl+Shift+A`    | Añadir sitio           |
-| `Ctrl+Shift+F`    | Crear carpeta         |
-| `Escape`          | Cerrar modal o menú    |
+## ⌨️ Atajos de teclado
 
-## Notas de compatibilidad
+| Atajo             | Acción            |
+| ----------------- | ----------------- |
+| `Ctrl+K` / `Cmd+K`| Enfocar búsqueda  |
+| `Ctrl+Shift+A`    | Añadir sitio      |
+| `Ctrl+Shift+F`    | Crear carpeta     |
+| `Escape`          | Cerrar modal/menú |
+
+---
+
+## ✅ Compatibilidad
 
 - **Chrome/Chromium**: Manifest V3, `chrome_url_overrides.newtab`.
-- **Firefox ≥ 109**: Manifest V3 (requiere instalar como temporal si no está
-  firmada). Se incluye `browser_specific_settings.gecko.id`.
-- **IceRaven (Firefox para Android)**: usar `dist/firefox/`, cargar temporal o
-  firmar para uso tan permanente como permita la versión.
-- **Quetta (Chromium para Android)**: usar `dist/chrome/`, cargar extensiones
-  desde su menú.
+- **Firefox ≥ 109**: Manifest V3 (temporal si no está firmada). Incluye
+  `browser_specific_settings.gecko.id`.
+- **IceRaven (Firefox Android)**: `dist/firefox/`.
+- **Quetta (Chromium Android)**: `dist/chrome/`.
 
-## Licencia
+## 📄 Licencia
 
-MIT. Hecho para un uso totalmente local y con respeto a la privacidad.
+[MIT](LICENSE). Hecho para un uso totalmente local y con respeto a la privacidad.
+
+> Estética de referencia de la UI: [uiverse.io/elements](https://uiverse.io/elements).
