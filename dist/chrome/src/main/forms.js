@@ -292,6 +292,27 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     body.appendChild(note);
   }
 
+  // Tamaño del texto, editable por el usuario para cada widget
+  // (sustituye al auto-escalado con cqmin).
+  let textScale = typeof cfg.textScale === 'number' ? cfg.textScale : 1;
+
+  const scaleWrap = el('div', 'settings-row');
+  scaleWrap.appendChild(el('span', 'settings-label', 'Tamaño del texto'));
+  const range = document.createElement('input');
+  range.type = 'range';
+  range.min = 0.5;
+  range.max = 2;
+  range.step = 0.05;
+  range.value = String(textScale);
+  const valueOut = el('span', 'settings-value', `${Math.round(textScale * 100)}%`);
+  range.addEventListener('input', () => {
+    textScale = Number(range.value);
+    valueOut.textContent = `${Math.round(textScale * 100)}%`;
+  });
+  scaleWrap.appendChild(range);
+  scaleWrap.appendChild(valueOut);
+  body.appendChild(scaleWrap);
+
   const saveBtn = button('Guardar', async () => {
     const merged = { ...cfg };
     if (widget.type === 'clock') {
@@ -302,6 +323,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
       merged.location = (locInput && typeof locInput.value === 'string' ? locInput.value : weatherLocation).trim();
       merged.units = weatherUnits;
     }
+    merged.textScale = Math.round(textScale * 100) / 100;
     await updateWidget(widget.id, { config: merged });
     toast('Widget actualizado');
     modal.dispose();

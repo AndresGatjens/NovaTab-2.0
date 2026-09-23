@@ -46,6 +46,9 @@ function renderWidget(widget, handlers) {
   if (typeof cfg.w === 'number' && cfg.w >= 90) node.style.width = `${cfg.w}px`;
   if (typeof cfg.h === 'number' && cfg.h >= 48) node.style.height = `${cfg.h}px`;
   if (typeof cfg.w === 'number' && typeof cfg.h === 'number') node.classList.add('sized');
+  if (typeof cfg.textScale === 'number' && cfg.textScale !== 1) {
+    node.style.setProperty('--widget-scale', String(cfg.textScale));
+  }
 
   if (widget.type === 'clock') renderClock(node, widget);
   else if (widget.type === 'date') renderDate(node, widget);

@@ -1,5 +1,17 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Tamaño de texto MANUAL por widget
+
+- Se elimina el auto-escalado con container queries (`cqmin`) del texto de los
+  widgets: el usuario prefiere controlar el tamaño manualmente, de forma
+  individual por cada widget.
+- Añadido slider "Tamaño del texto" (0.5×–2×, paso 0.05) en el formulario de
+  edición de CADA widget. Se guarda en `config.textScale`.
+- CSS: `.widget { --widget-scale: 1 }` y todos los font-size de reloj/fecha/
+  clima/calendario/notas se multiplican por `calc(… * var(--widget-scale))`.
+- `.widget.sized` ya solo ajusta el padding (sin `container-type`).
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — Notas: sin parpadeo al escribir + botón "+" para nueva nota
 
 - BUG: al escribir en el widget de notas, cada guardado (`updateWidget` →

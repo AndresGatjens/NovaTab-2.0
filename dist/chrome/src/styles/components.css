@@ -366,72 +366,13 @@
   -webkit-backdrop-filter: blur(var(--blur, 8px));
   box-shadow: 0 12px 30px -12px rgba(2, 6, 23, 0.4);
   overflow: hidden;
+  --widget-scale: 1;
 }
 
-/* Widget redimensionado manualmente: el contenido se escala con el marco
-   (container queries) para que nunca se salga del borde. */
+/* Widget redimensionado manualmente: solo ajusta el acolchado, el tamaño del
+   texto lo controla el usuario con "Tamaño del texto" en cada widget. */
 .widget.sized {
-  container-type: size;
   padding: 12px;
-}
-
-.widget.sized .clock-time,
-.widget.sized .weather-temp {
-  font-size: clamp(24px, 60cqmin, 110px);
-}
-
-.widget.sized .clock-date,
-.widget.sized .weather-desc {
-  font-size: clamp(12px, 18cqmin, 26px);
-  max-width: 100%;
-}
-
-.widget.sized .weather-setup {
-  font-size: clamp(11px, 14cqmin, 18px);
-  padding: 4px 10px;
-}
-
-.widget.sized .calendar {
-  min-width: 0;
-  min-height: 0;
-  justify-content: space-between;
-}
-
-.widget.sized .calendar-header {
-  font-size: clamp(13px, 16cqmin, 20px);
-}
-
-.widget.sized .calendar-weekday,
-.widget.sized .calendar-day {
-  font-size: clamp(10px, 11cqmin, 15px);
-}
-
-.widget.sized .calendar-week,
-.widget.sized .calendar-grid {
-  gap: 2px;
-}
-
-.widget.sized .calendar-day {
-  height: auto;
-  aspect-ratio: auto;
-  min-width: 0;
-  min-height: 0;
-  padding: 2px 0;
-}
-
-.widget.sized.widget-calendar {
-  min-width: 0;
-  width: 100%;
-}
-
-.widget.sized .notes-input {
-  font-size: clamp(12px, 15cqmin, 24px);
-  padding: 4px 10px;
-}
-
-.widget.sized.widget-notes,
-.widget.sized .notes {
-  min-width: 0;
 }
 
 .widgets-layer .widget.floating {
@@ -452,7 +393,7 @@
 }
 
 .clock-time {
-  font-size: clamp(34px, 6vw, 54px);
+  font-size: calc(clamp(34px, 6vw, 54px) * var(--widget-scale));
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -461,7 +402,7 @@
 }
 
 .clock-date {
-  font-size: 16px;
+  font-size: calc(16px * var(--widget-scale));
   font-weight: 600;
   color: var(--text);
   text-transform: capitalize;
@@ -555,7 +496,7 @@
 }
 
 .weather-temp {
-  font-size: clamp(34px, 5vw, 50px);
+  font-size: calc(clamp(34px, 5vw, 50px) * var(--widget-scale));
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -566,7 +507,7 @@
 
 .weather-desc {
   margin-top: 3px;
-  font-size: 14px;
+  font-size: calc(14px * var(--widget-scale));
   font-weight: 600;
   text-align: center;
   color: var(--text-muted);
@@ -586,7 +527,7 @@
 }
 
 .calendar-header {
-  font-size: 15px;
+  font-size: calc(15px * var(--widget-scale));
   font-weight: 700;
   text-align: center;
   color: var(--text);
@@ -601,7 +542,7 @@
 }
 
 .calendar-weekday {
-  font-size: 11px;
+  font-size: calc(11px * var(--widget-scale));
   font-weight: 700;
   text-align: center;
   color: var(--text-muted);
@@ -610,8 +551,8 @@
 .calendar-day {
   display: grid;
   place-items: center;
-  height: 30px;
-  font-size: 13px;
+  height: calc(30px * var(--widget-scale));
+  font-size: calc(13px * var(--widget-scale));
   font-weight: 600;
   color: var(--text);
   border-radius: 8px;
@@ -657,7 +598,7 @@
   color: var(--text);
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 15px;
+  font-size: calc(15px * var(--widget-scale));
   line-height: 1.45;
   font-family: inherit;
   user-select: text;
@@ -1164,6 +1105,22 @@
 .settings-label {
   font-size: 14px;
   font-weight: 500;
+}
+
+.settings-value {
+  min-width: 44px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  text-align: right;
+}
+
+.settings-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .sel {
