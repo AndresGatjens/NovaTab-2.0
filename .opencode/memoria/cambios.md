@@ -1,5 +1,35 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Iconos y carpetas arrastrables entre ventanas del grid
+
+- `onEmptyDrop` ahora reordena TAMBIÉN los favoritos (no solo carpetas) hacia la
+  página/ventana destino donde se suelta:
+  - Dentro de una carpeta: `reorderBookmark(id, pageIndex * per, carpeta)`.
+  - Raíz → raíz: `reorderBookmark` con offset ajustado (los bookmarks van tras
+    las carpetas en el grid: `pageIndex * per - nºcarpetas`).
+  - Otra carpeta → raíz: `moveBookmark` a raíz + `reorderBookmark` en la página
+    destino.
+- Las carpetas ya se movían a la página destino desde el cambio anterior.
+- `pageSize` centralizado: se calcula igual que en grid.js (columns × rows).
+- Rebuild → dist/chrome (42 archivos). 12 tests OK, node --check OK.
+
+## 2026-09-22 — Carpetas: mover/crear en cualquier ventana del grid
+
+- ELIMINADA la limitación "las carpetas solo se pueden soltar sobre otra
+  carpeta". Ahora `onEmptyDrop` también acepta carpetas: al soltar una carpeta
+  en un hueco vacío se mueve a esa página/ventana del grid (`reorderFolder` a
+  `pageIndex * pageSize`), con toast "Carpeta movida". Los favoritos mantienen
+  el comportamiento de salir a la raíz.
+- `grid.js` pasa el `pageIndex` calculado del scroll al callback `onEmptyDrop`,
+  y exporta `currentPage(host)` (página visible actual).
+- Las carpetas nuevas se crean en la página/ventana visible: `addFolder` acepta
+  una `position` opcional (desplaza el resto de carpetas raíz) y
+  `renderFolderForm` la calcula como `currentPage(this.gridHost) * pageSize`.
+  Ya no se añaden siempre al final.
+- `index.js` guarda `this.gridHost` (host de páginas raíz o de carpeta) en
+  `renderGrid()` para conocer la ventana activa.
+- Rebuild → dist/chrome (42 archivos). 12 tests OK, node --check OK.
+
 ## 2026-09-22 — Renombrada a "Novantab"
 
 - "Nova New Tab" ya estaba tomada en las tiendas de extensiones; la extensión

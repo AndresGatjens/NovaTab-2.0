@@ -13,17 +13,25 @@ export function topLevelFolders() {
   return sorted(store.get().folders);
 }
 
-export async function addFolder(title, parentId = null) {
+export async function addFolder(title, parentId = null, position) {
   const folders = store.get().folders;
-  const position = parentId == null ? sorted(folders).length : folders.filter((f) => f.parentId === parentId).length;
+  const top = sorted(folders);
+  const fallback = parentId == null ? top.length : folders.filter((f) => f.parentId === parentId).length;
+  const pos = position == null ? fallback : Math.max(0, Math.min(position, top.length));
   const folder = {
     id: uid('fld'),
     title: title.trim(),
     icon: 'folder',
-    position,
+    position: pos,
     parentId,
   };
-  await store.set('folders', [...folders, folder]);
+  let next;
+  if (parentId == null && position != null) {
+    next = folders.map((f) => (f.parentId == null ? { ...f, position: f.position + (f.position >= pos ? 1 : 0) } : f));
+  } else {
+    next = folders;
+  }
+  await store.set('folders', [...next, folder]);
   return folder;
 }
 

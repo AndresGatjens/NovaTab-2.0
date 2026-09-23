@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.log
 *.zip
+.opencode/memoria/seguridad.md

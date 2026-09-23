@@ -2,7 +2,7 @@ import { store } from '../storage/store.js';
 import { browserAPI } from '../storage/browser-api.js';
 import { applyTheme, applyBackground, setupShortcuts, setupFab } from './bootstrap.js';
 import { renderSearchBar } from '../components/search-bar.js';
-import { renderGrid, renderFolderGrid } from '../components/grid.js';
+import { renderGrid, renderFolderGrid, currentPage } from '../components/grid.js';
 import { openSettingsPanel } from '../components/settings-panel.js';
 import { showContextMenu, hideContextMenu } from '../components/context-menu.js';
 import { toast } from '../components/toast.js';
@@ -182,9 +182,9 @@ class NewTabApp {
       this.renderFolderBar(folderId);
       const folderHost = el('div', 'folder-grid-host');
       this.gridSlot.appendChild(folderHost);
-      renderFolderGrid(folderHost, folderId, common);
+      this.gridHost = renderFolderGrid(folderHost, folderId, common);
     } else {
-      renderGrid(this.gridSlot, common);
+      this.gridHost = renderGrid(this.gridSlot, common);
     }
   }
 
@@ -355,7 +355,10 @@ class NewTabApp {
           await renameFolder(folder.id, title);
           toast('Carpeta renombrada');
         } else {
-          await addFolder(title);
+          const s = store.getSettings();
+          const per = Math.max(1, (s.gridColumns || 5) * (s.gridRows || 4));
+          const pos = currentPage(this.gridHost) * per;
+          await addFolder(title, null, pos);
           toast('Carpeta creada');
         }
         this.renderGrid();
@@ -421,17 +424,39 @@ class NewTabApp {
     this.renderGrid();
   }
 
-  /** Soltar un favorito sobre el espacio vacío: lo saca de la carpeta a la raíz. */
-  async onEmptyDrop(e) {
+  /** Soltar sobre el espacio vacío: mover carpeta o favorito a la página/ventana destino. */
+  async onEmptyDrop(e, pageIndex = 0) {
     const src = this.dragItem;
     if (!src) return;
-    // Solo favoritos (las carpetas solo se pueden soltar sobre otra carpeta).
-    if (src.type !== 'bookmark') return;
-    // Ya está en la raíz: no hay nada que sacar.
+    const per = Math.max(1, (store.getSettings().gridColumns || 5) * (store.getSettings().gridRows || 4));
+
+    if (src.type === 'folder') {
+      await reorderFolder(src.data.id, pageIndex * per);
+      this.renderGrid();
+      toast('Carpeta movida');
+      return;
+    }
+
+    const inFolder = this.currentFolderId;
     const fromFolder = src.fromFolder === 'root' ? null : src.fromFolder;
-    if (fromFolder == null) return;
+    if (inFolder != null) {
+      // Vista de carpeta: reordenar el icono dentro de la misma carpeta hacia la página destino.
+      await reorderBookmark(src.data.id, pageIndex * per, inFolder);
+      this.renderGrid();
+      toast('Icono movido');
+      return;
+    }
+    if (fromFolder == null) {
+      // Raíz → raíz: reordenar el icono en la página destino (los bookmarks van tras las carpetas).
+      const offset = topLevelFolders().length;
+      await reorderBookmark(src.data.id, Math.max(0, pageIndex * per - offset));
+      this.renderGrid();
+      toast('Icono movido');
+      return;
+    }
+    // Carrera de otra carpeta → raíz, colocado en la página destino.
     await moveBookmark(src.data.id, null);
-    this.currentFolderId = null;
+    await reorderBookmark(src.data.id, Math.max(0, pageIndex * per - topLevelFolders().length));
     this.renderGrid();
     toast('Movido a la cuadrícula');
   }

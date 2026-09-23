@@ -144,6 +144,13 @@ function pageSize() {
   return Math.max(1, (s.gridColumns || 5) * (s.gridRows || 4));
 }
 
+/** Página visible actual del host (para insertar elementos en la ventana activa). */
+export function currentPage(host) {
+  if (!host) return 0;
+  const pageW = host.clientWidth || 1;
+  return Math.max(0, Math.round(host.scrollLeft / pageW));
+}
+
 function chunkIntoPages(items) {
   const per = pageSize();
   const pages = [];
@@ -202,7 +209,8 @@ function renderPages(container, pages, buildCard, handlers) {
   host.addEventListener('drop', (e) => {
     if (e.target.closest('.card')) return;
     e.preventDefault();
-    if (handlers.onEmptyDrop) handlers.onEmptyDrop(e);
+    const pageIndex = Math.round(host.scrollLeft / (host.clientWidth || 1)) || 0;
+    if (handlers.onEmptyDrop) handlers.onEmptyDrop(e, pageIndex);
   });
   return host;
 }
