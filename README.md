@@ -6,7 +6,6 @@
 
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-236ad3?logo=google-chrome&logoColor=white&labelColor=555)](https://developer.chrome.com/docs/extensions/develop/migrate)
 [![Chrome](https://img.shields.io/badge/Chrome%20%2F%20Chromium-OK-4285F4?logo=google-chrome&logoColor=white&labelColor=555)]()
-[![Firefox](https://img.shields.io/badge/Firefox%20%2F%20IceRaven-OK-FF7139?logo=firefox&logoColor=white&labelColor=555)]()
 [![Private](https://img.shields.io/badge/100%25%20local-no%20tracking-green?labelColor=555)]()
 [![License MIT](https://img.shields.io/badge/License-MIT-blue?labelColor=555)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.0.0-8b5cf6?labelColor=555)]()
@@ -50,14 +49,9 @@ pinchar en ningún botón: cada pestaña nueva ya es **Novantab**.
 
 ---
 
-## 📦 Instalación (versiones compiladas)
+## 📦 Instalación (versión compilada)
 
-El repo incluye los builds listos para instalar:
-
-| Carpeta          | Navegador                                        |
-| ---------------- | ------------------------------------------------ |
-| `dist/chrome/`   | Chrome, Chromium, Brave, Edge, Quetta (Android)  |
-| `dist/firefox/`  | Firefox, IceRaven, LibreWolf y derivados         |
+El repo incluye el build listo para instalar en `dist/chrome/`.
 
 ### Chrome / Chromium / Brave / Edge / Quetta
 
@@ -70,18 +64,6 @@ El repo incluye los builds listos para instalar:
 > En Android con **Quetta**: activa "Permitir extensiones" y carga la carpeta
 > (o un `.zip` de `dist/chrome/`) desde los Ajustes de extensiones.
 
-### Firefox / IceRaven
-
-1. Abre `about:debugging#/runtime/this-firefox`.
-2. Pulsa **"Cargar extensión temporal…"**.
-3. Selecciona `dist/firefox/manifest.json`.
-4. Abre una **nueva pestaña**.
-
-> Para instalación permanente en Firefox: comprime `dist/firefox/` en `.zip` y
-> usa `about:addons` → engranaje → "Instalar desde archivo…". La publicación
-> oficial en AMO requiere firma; para uso personal sirve la opción temporal o
-> Developer Edition/Nightly.
-
 ---
 
 ## 🔨 Build desde el código
@@ -90,9 +72,7 @@ Requisitos: **Node.js ≥ 18**. Sin dependencias externas (script propio).
 
 ```bash
 npm run icons          # regenera los iconos PNG (opcional)
-npm run build          # genera dist/chrome y dist/firefox
-npm run build:chrome   # solo Chrome/Chromium
-npm run build:firefox  # solo Firefox/IceRaven
+npm run build          # genera dist/chrome
 npm test               # ejecuta los tests (URLs e import/export)
 ```
 
@@ -100,8 +80,7 @@ Salida:
 
 ```
 dist/
-├── chrome/   → carga descomprimida en chrome://extensions
-└── firefox/  → carga en about:debugging (IceRaven también)
+└── chrome/   → carga descomprimida en chrome://extensions
 ```
 
 ---
@@ -122,18 +101,16 @@ browser-newtab/
 ├── public/icons/            # iconos generados (script propio, sin deps)
 ├── tests/                   # node --test
 ├── scripts/                 # build.mjs, icons.mjs
-├── dist/                    # salidas listas para instalar (Chrome + Firefox)
+├── dist/                    # salida lista para instalar (Chrome)
 ├── manifest.chrome.json
-├── manifest.firefox.json
 └── package.json
 ```
 
 ### Capa multiplataforma
 
-El wrapper `src/storage/browser-api.js` detecta `browser.*` (Firefox/IceRaven)
-o `chrome.*` (Chromium) y normaliza `storage.local` a Promesas, de modo que toda
-la app usa `browserAPI.storage.get/set`. No hay lógica duplicada por navegador:
-el único cambio entre builds es el `manifest.json`.
+El wrapper `src/storage/browser-api.js` detecta `browser.*` o `chrome.*` y
+normaliza `storage.local` a Promesas, de modo que toda la app usa
+`browserAPI.storage.get/set`. Funciona en Chrome, Chromium, Brave, Edge y Quetta.
 
 ---
 
@@ -159,10 +136,7 @@ el único cambio entre builds es el `manifest.json`.
 ## ✅ Compatibilidad
 
 - **Chrome/Chromium**: Manifest V3, `chrome_url_overrides.newtab`.
-- **Firefox ≥ 109**: Manifest V3 (temporal si no está firmada). Incluye
-  `browser_specific_settings.gecko.id`.
-- **IceRaven (Firefox Android)**: `dist/firefox/`.
-- **Quetta (Chromium Android)**: `dist/chrome/`.
+- **Brave / Edge / Quetta (Chromium)**: también compatibles.
 
 ## 📄 Licencia
 

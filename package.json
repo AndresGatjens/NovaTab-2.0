@@ -1,15 +1,13 @@
 {
   "name": "novantab",
   "version": "2.0.0",
-  "description": "Extensión New Tab moderna: búsqueda, favoritos, carpetas, widgets y personalización. 100% local, para Chrome/Chromium, Firefox e IceRaven.",
+  "description": "Extensión New Tab moderna: búsqueda, favoritos, carpetas, widgets y personalización. 100% local, para Chrome/Chromium.",
   "type": "module",
   "license": "MIT",
   "private": true,
   "scripts": {
     "icons": "node scripts/icons.mjs",
     "build": "node scripts/build.mjs",
-    "build:chrome": "node scripts/build.mjs chrome",
-    "build:firefox": "node scripts/build.mjs firefox",
     "test": "node --test tests/"
   },
   "engines": {

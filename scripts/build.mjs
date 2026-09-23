@@ -1,9 +1,9 @@
 /**
- * Build de la extensión: genera dist/chrome/ y dist/firefox/.
+ * Build de la extensión: genera dist/chrome/.
  * Sin dependencias: copia el árbol de src/, los iconos y añade el manifest
- * correspondiente a cada navegador.
+ * de Chrome.
  *
- * Uso: node scripts/build.mjs [chrome|firefox|all]
+ * Uso: node scripts/build.mjs
  */
 import { cpSync, mkdirSync, rmSync, readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -13,13 +13,9 @@ import { execSync } from 'node:child_process';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const DIST = join(ROOT, 'dist');
-const TARGET = process.argv[2] || 'all';
 
-const targets = TARGET === 'all' ? ['chrome', 'firefox'] : [TARGET];
-
-function build(target) {
-  console.log(`Build para: ${target}`);
-  const out = join(DIST, target);
+function build() {
+  const out = join(DIST, 'chrome');
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
 
@@ -33,14 +29,13 @@ function build(target) {
   const icons = join(ROOT, 'public', 'icons');
   if (existsSync(icons)) cpSync(icons, join(out, 'icons'), { recursive: true });
 
-  // 4. Manifest según navegador.
-  const manifestFile = target === 'firefox' ? 'manifest.firefox.json' : 'manifest.chrome.json';
-  const manifest = JSON.parse(readFileSync(join(ROOT, manifestFile), 'utf8'));
+  // 4. Manifest de Chrome.
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'manifest.chrome.json'), 'utf8'));
   writeFileSync(join(out, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
   // 5. Comprobación de sintaxis de los JS del paquete.
   checkJsInTree(out);
-  console.log(`  OK: dist/${target}/ (${countFiles(out)} archivos)`);
+  console.log(`  OK: dist/chrome/ (${countFiles(out)} archivos)`);
 }
 
 function collectJs(dir) {
@@ -74,5 +69,5 @@ function countFiles(dir) {
   return n;
 }
 
-for (const target of targets) build(target);
+build();
 console.log('Build completado.');
