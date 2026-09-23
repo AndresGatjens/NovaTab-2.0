@@ -476,3 +476,30 @@
   en items con submenú sin onClick ("Mover a carpeta…"). Ahora se comprueba
   typeof onClick antes de llamarlo (también en los items del submenú).
   16/16 tests OK.
+## 2026-09-23 — Widgets flotantes con resolución + fecha/clima configurables — LISTO
+- **Widgets flotantes inteligentes** (src/utils/layout.js NUEVO): resolveFloat/
+  nearestFree/clampRect mantienen cada widget flotante DENTRO de la pantalla y
+  SIN pisar la barra de widgets ni otros flotantes. Correcciones persistidas:
+  - Al renderizar (resolve() en renderWidgetsBar → persiste x/y si los datos
+    guardados quedaron antiguos/fuera de pantalla).
+  - Al soltar un drag (resolveInteractive en pointerup).
+  - Al terminar un resize (también clampea w/h al viewport).
+  - Al redimensionar la ventana (listener resize en index.js con debounce 150ms).
+  - renderWidgetsBar ahora devuelve { wrap, resolve } en vez del nodo directo
+    (index.js adaptado).
+- **Fecha configurable** (renderDate): 7 formatos vía config.format
+  (full/long/medium/short/numeric/daymonth/weekday) + inicial en mayúscula.
+  Selector en renderWidgetForm + claves i18n es/en nuevas (widget.date.*).
+- **Clima con detalle configurable** (renderWeather): config.detail
+  (desc/wind/humidity/feels), unidades correctas °C/°F y km/h/mph;
+  selector en renderWidgetForm + i18n (widget.weather.detail/desc + reúso
+  weather.wind/humidity/feels).
+- **defaultConfig(type)** en services/widgets.js: reloj 12h+ampm, fecha full,
+  clima metric+desc, notes {text:''}.
+- Quitado el submenú "Mover a carpeta…" del menú contextual de favoritos
+  (bookmarkMenu) junto con import de topLevelFolders.
+- **Limpieza**: dist/ removido del tracking de git (ya estaba en .gitignore;
+  ahora el repo solo versiona src/). Build regenera dist/chrome.
+- Verificación: 16/16 tests OK · sintaxis OK · build OK (45 archivos) ·
+  i18n ES=172 EN=172 con 0 claves faltantes de las 128 usadas.
+- Commit c10bbbe pusheado a origin/main.
