@@ -96,6 +96,11 @@ class NewTabApp {
     if (onStorageChanged && onStorageChanged.addListener) {
       onStorageChanged.addListener((changes, area) => {
         if (area === 'local' && changes['novaNewTab.state.v1']) {
+          // Si el cambio procede de esta misma pestaña, el store en memoria ya
+          // está al día: re-renderizar aquí reemplazaría el DOM (p. ej. el
+          // textarea de notas en plena escritura) y haría "parpadear" la UI.
+          const newState = changes['novaNewTab.state.v1'].newValue;
+          if (newState && JSON.stringify(newState) === JSON.stringify(store.get())) return;
           store.init().then(() => {
             applyTheme();
             applyBackground();

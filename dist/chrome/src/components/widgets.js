@@ -1,6 +1,6 @@
 import { el } from '../utils/dom.js';
 import { store } from '../storage/store.js';
-import { enabledWidgets, updateWidget, widgets } from '../services/widgets.js';
+import { enabledWidgets, updateWidget, widgets, addWidget } from '../services/widgets.js';
 import { showContextMenu } from './context-menu.js';
 import { fetchWeather, weatherLabel } from '../services/weather-api.js';
 
@@ -51,7 +51,7 @@ function renderWidget(widget, handlers) {
   else if (widget.type === 'date') renderDate(node, widget);
   else if (widget.type === 'weather') renderWeather(node, widget, handlers);
   else if (widget.type === 'calendar') renderCalendar(node, widget);
-  else if (widget.type === 'notes') renderNotes(node, widget);
+  else if (widget.type === 'notes') renderNotes(node, widget, handlers);
 
   const toggle = el('button', 'widget-close');
   toggle.type = 'button';
@@ -327,7 +327,7 @@ function renderCalendar(node, widget) {
   node.appendChild(wrap);
 }
 
-function renderNotes(node, widget) {
+function renderNotes(node, widget, handlers) {
   const wrap = el('div', 'notes');
   const area = el('textarea', 'notes-input');
   area.placeholder = 'Pendientes…';
@@ -342,6 +342,17 @@ function renderNotes(node, widget) {
   area.addEventListener('change', () => {
     updateWidget(widget.id, { config: { ...(widget.config || {}), text: area.value } });
   });
+  // Botón "+": crea otra nota/pendientes sin salir de esta.
+  const addBtn = el('button', 'widget-addnote');
+  addBtn.type = 'button';
+  addBtn.title = 'Nueva nota';
+  addBtn.setAttribute('aria-label', 'Nueva nota');
+  addBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>';
+  addBtn.addEventListener('click', async () => {
+    await addWidget('notes');
+    if (handlers && handlers.onChange) handlers.onChange();
+  });
+  node.appendChild(addBtn);
   node.appendChild(wrap);
   wrap.appendChild(area);
 }

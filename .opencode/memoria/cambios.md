@@ -1,5 +1,17 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Notas: sin parpadeo al escribir + botón "+" para nueva nota
+
+- BUG: al escribir en el widget de notas, cada guardado (`updateWidget` →
+  `storage.set`) disparaba `storage.onChanged` que re-renderizaba todos los
+  widgets en la misma pestaña → el textarea se reconstruía (parpadeo y pérdida
+  de foco).
+- Fix en index.js: `storage.onChanged` ahora omite los cambios que ya coinciden
+  con el estado en memoria (proceden de esta misma pestaña), evitando re-render.
+- Añadido botón "+" (`.widget-addnote`, esquina sup. derecha, visible al pasar
+  el ratón) dentro del widget de notas que crea OTRA nota sin salir de esta.
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — DnD entre ventanas: auto-scroll horizontal al arrastrar
 
 - Al arrastrar una carpeta/icono al borde derecho/izquierdo de la ventana, las

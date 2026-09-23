@@ -487,6 +487,28 @@
   opacity: 1;
 }
 
+/* Botón "+" de los widgets de notas: crea otra nota. */
+.widget-addnote {
+  position: absolute;
+  top: 3px;
+  right: 26px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  opacity: 0;
+  color: var(--text-muted);
+  transition: opacity 0.15s ease;
+  background: rgba(127, 127, 127, 0.2);
+  z-index: 2;
+}
+
+.widget:hover .widget-addnote,
+.widget-addnote:focus-visible {
+  opacity: 1;
+}
+
 /* Asa de redimensionado (esquina inferior derecha, estilo Android). */
 .widget-resize {
   position: absolute;
