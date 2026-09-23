@@ -323,13 +323,14 @@ export function openSettingsPanel(onClose) {
   function renderWidgets(host) {
     host.appendChild(sectionTitle('Widgets'));
     const note = el('p', 'settings-note');
-    note.textContent = 'Restaura los widgets que ocultaste o añade el clima.';
+    note.textContent = 'Restaura los widgets que ocultaste o añade los que falten.';
     host.appendChild(note);
 
     const all = widgets();
     const visible = all.filter((w) => w.enabled);
     const hidden = all.filter((w) => !w.enabled);
     const hasWeather = all.some((w) => w.type === 'weather');
+    const hasCalendar = all.some((w) => w.type === 'calendar');
 
     if (visible.length) {
       host.appendChild(sectionTitle('Activos'));
@@ -349,22 +350,27 @@ export function openSettingsPanel(onClose) {
         }));
       }
     }
-    if (!hasWeather) {
+    const missing = [];
+    if (!hasWeather) missing.push(['weather', 'Clima (Open-Meteo)']);
+    if (!hasCalendar) missing.push(['calendar', 'Calendario']);
+    if (missing.length) {
       host.appendChild(sectionTitle('Más widgets'));
-      row(host, 'Clima (Open-Meteo)', buttonSmall('Añadir', async () => {
-        await addWidget('weather');
-        renderWidgets(host);
-      }));
+      for (const [type, label] of missing) {
+        row(host, label, buttonSmall('Añadir', async () => {
+          await addWidget(type);
+          renderWidgets(host);
+        }));
+      }
     }
     if (!visible.length && !hidden.length) {
       const p = el('p', 'settings-note');
-      p.textContent = 'No hay widgets. Añade el clima desde "Más widgets".';
+      p.textContent = 'No hay widgets. Añade alguno desde "Más widgets".';
       host.appendChild(p);
     }
   }
 
   function widgetLabel(type) {
-    return { clock: 'Reloj', date: 'Fecha', weather: 'Clima' }[type] ?? type;
+    return { clock: 'Reloj', date: 'Fecha', weather: 'Clima', calendar: 'Calendario' }[type] ?? type;
   }
 
   function buttonSmall(label, onClick) {

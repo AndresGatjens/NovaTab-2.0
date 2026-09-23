@@ -1,5 +1,18 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Widget de Calendario
+
+- NUEVO widget de **Calendario** (`type: 'calendar'`): muestra el mes actual con
+  cabecera en mayúsculas, fila de días de la semana (L-D), rejilla del mes y el
+  día de hoy resaltado con el color de acento. Desactivado por defecto en
+  `DEFAULT_WIDGETS` (como el clima) y añadible desde Configuración > Widgets >
+  "Más widgets" junto a Clima.
+- `renderCalendar` en widgets.js (días en lunes, hoy con `--accent`).
+- Formulario de edición: "Editar calendario" sin ajustes extra.
+- CSS: `.calendar`, `.calendar-header`, `.calendar-week(day)`, `.calendar-grid`,
+  `.calendar-day(.today/.blank)`, `.widget-calendar` (min-width 250px).
+- Rebuild → dist/chrome (43 archivos). 16 tests OK, node --check OK.
+
 ## 2026-09-22 — Carpetas e iconos se mezclan libremente en el grid (revueltos)
 
 - NUEVO orden global del grid raíz: `gridOrder`, un array que mezcla carpetas e

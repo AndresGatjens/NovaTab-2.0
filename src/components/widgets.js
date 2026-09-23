@@ -49,6 +49,7 @@ function renderWidget(widget, handlers) {
   if (widget.type === 'clock') renderClock(node, widget);
   else if (widget.type === 'date') renderDate(node, widget);
   else if (widget.type === 'weather') renderWeather(node, widget, handlers);
+  else if (widget.type === 'calendar') renderCalendar(node, widget);
 
   const toggle = el('button', 'widget-close');
   toggle.type = 'button';
@@ -278,5 +279,48 @@ function renderWeather(node, widget, handlers) {
     // Refresca cada 10 minutos (acorde al caché del servicio).
     setInterval(load, 600000);
   }
+  node.appendChild(wrap);
+}
+
+const WEEKDAYS_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+function renderCalendar(node, widget) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const locale = widget.config.locale || store.getSettings()?.locale || 'es';
+
+  const wrap = el('div', 'calendar');
+  const header = el('div', 'calendar-header');
+  try {
+    header.textContent = now.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  } catch {
+    header.textContent = now.toLocaleDateString();
+  }
+  header.textContent = header.textContent.charAt(0).toUpperCase() + header.textContent.slice(1);
+  wrap.appendChild(header);
+
+  const week = el('div', 'calendar-week');
+  for (const day of WEEKDAYS_SHORT) {
+    const cell = el('span', 'calendar-weekday', day);
+    week.appendChild(cell);
+  }
+  wrap.appendChild(week);
+
+  // Primer día del mes: 0 = domingo; ajustamos para empezar en lunes.
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = now.getDate();
+
+  const grid = el('div', 'calendar-grid');
+  for (let i = 0; i < firstWeekday; i++) {
+    grid.appendChild(el('span', 'calendar-day calendar-day-blank'));
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cell = el('span', 'calendar-day', String(day));
+    if (day === today) cell.classList.add('today');
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid);
   node.appendChild(wrap);
 }
