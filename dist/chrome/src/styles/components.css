@@ -1347,6 +1347,26 @@
   gap: 12px;
 }
 
+.gestor-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.gestor-status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e11d48;
+}
+
+.gestor-status.ok::before {
+  background: #22c55e;
+}
+
 /* ============ Botón de ajustes globales ============ */
 .settings-fab {
   position: fixed;

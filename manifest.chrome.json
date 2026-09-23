@@ -10,7 +10,8 @@
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://geocoding-api.open-meteo.com/*",
-    "https://api.open-meteo.com/*"
+    "https://api.open-meteo.com/*",
+    "http://127.0.0.1:8734/*"
   ],
   "background": {
     "service_worker": "background.js"

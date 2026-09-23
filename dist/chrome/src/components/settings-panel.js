@@ -9,6 +9,21 @@ import { toast } from './toast.js';
 import { importFile, downloadConfig } from '../services/export-config.js';
 import { LANGS, setLang, t } from '../services/i18n.js';
 
+/** URL del Gestor Nova (herramienta local para organizar carpetas y enlaces). */
+const GESTOR_URL = 'http://127.0.0.1:8734';
+
+/** Comprueba si el servidor local del Gestor Nova responde y pinta el estado. */
+async function checkGestor(statusEl) {
+  try {
+    const r = await fetch(`${GESTOR_URL}/api/datos`, { signal: AbortSignal.timeout(1500) });
+    statusEl.textContent = r.ok ? t('config.gestor.online') : t('config.gestor.offline');
+    statusEl.classList.toggle('ok', r.ok);
+  } catch {
+    statusEl.textContent = t('config.gestor.offline');
+    statusEl.classList.remove('ok');
+  }
+}
+
 /** Paleta de colores para fondos (evita el diálogo nativo que se sale de la página). */
 const PALETTE = [
   '#0f172a', '#1e293b', '#334155', '#475569',
@@ -490,6 +505,21 @@ export function openSettingsPanel(onClose) {
     rowBtns.appendChild(exportBtn);
     rowBtns.appendChild(importBtn);
     host.appendChild(rowBtns);
+
+    host.appendChild(sectionTitle('config.gestor.title'));
+    const gestorNote = el('p', 'settings-note');
+    gestorNote.textContent = t('config.gestor.note');
+    host.appendChild(gestorNote);
+
+    const gestorBtns = el('div', 'data-actions');
+    const openBtn = el('button', 'btn btn-primary', t('config.gestor.open'));
+    openBtn.type = 'button';
+    openBtn.addEventListener('click', () => chrome.tabs.create({ url: GESTOR_URL }));
+    const status = el('span', 'gestor-status', t('config.gestor.offline'));
+    checkGestor(status);
+    gestorBtns.appendChild(openBtn);
+    gestorBtns.appendChild(status);
+    host.appendChild(gestorBtns);
   }
 
   function row(parent, label, control) {

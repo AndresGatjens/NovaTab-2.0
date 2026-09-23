@@ -422,3 +422,37 @@
   `git add -A && git commit -m "i18n completo (es/en) + captura de referencia"`
   seguido de `git tag v2.0.0 && git push origin main --tags` y release
   "Novantab v2.0.0" (asset novantab-chrome.zip). Revisar antes `git status`.
+--- 2026-09-22 · CIERRE DE SESIÓN (guardar y continuar mañana) ---
+- ✅ i18n COMPLETO y VERIFICADO: es=152, en=152, used=106, **0 faltantes**
+  (script por bloques `blk('es')`/`blk('en')` + uso real `t(...)` en src/**).
+- ✅ 16/16 tests OK · build OK (dist/chrome, 44 archivos) · SINTAXIS OK en
+  i18n.js/forms.js/index.js.
+- ✅ Commit único `bafb39d` (i18n + captura preview.png + README) PUSHEADO a
+  origin/main.
+- ✅ Captura de referencia subida al repo (screenshots/preview.png, referenciada
+  en README sección "🤖 ¿Cómo se ve?").
+- ⚠️ PENDIENTE DECIDIR mañana (NO forzado hoy): el tag v2.0.0 está en
+  389d721 (commit anterior), NO incluye el i18n. Opciones: (a) `git tag -f
+  v2.0.0` + `git push origin v2.0.0 --force` (release v2.0.0 pasa a incluir
+  el i18n), o (b) crear v2.0.1. Elegir con el usuario. El release de GitHub
+  apunta al tag v2.0.0.
+- Próximo paso mañana: confirmar con el usuario tag/release (a/b) y, si toca,
+  editar el release para adjuntar el asset novantab-chrome.zip desde dist/chrome.
+## 2026-09-22 — Release v2.0.1 publicado con i18n completo ✓
+- **Release `v2.0.1`** (tag `v2.0.1`, id 394286701) con asset
+  `novantab-chrome.zip` (64 914 bytes) → el zip que incluye el i18n ES/EN
+  completo + captura. Download:
+  https://github.com/AndresGatjens/NovaTab-2.0/releases/download/v2.0.1/novantab-chrome.zip
+- Commit subyacente: `bafb39d` (i18n 152/152 por idioma, 0 faltantes) pusheado
+  a origin/main. 16/16 tests OK · build OK (dist/chrome 44 archivos).
+- TAREA CERRADA. ✔
+## 2026-09-23 — Sección "Gestor Nova" en Configuración → Datos
+- Nueva sección en el panel de config (src/components/settings-panel.js, renderDatos):
+  botón "Abrir Gestor Nova" que abre http://127.0.0.1:8734 (chrome.tabs.create)
+  + estado del servidor local (fetch a /api/datos con AbortSignal.timeout 1500,
+  indicador .gestor-status con punto verde/rojo).
+- i18n: 4 claves nuevas es/en (config.gestor.title/note/open/online/offline = 5).
+- CSS: .gestor-status y .ok (components.css).
+- manifest.chrome.json: host_permission http://127.0.0.1:8734/* añadido para
+  poder comprobar el estado del servidor desde la extensión.
+- Build OK (dist/chrome 44 archivos), sintaxis OK.
