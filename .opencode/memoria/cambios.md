@@ -518,3 +518,13 @@
 - Verificado: 16/16 tests · build OK (45) · sintaxis OK · API Open-Meteo OK
   (geocoding 3598132 Ciudad de Guatemala + forecast 200 OK).
 - PUSHED a origin/main (d120a03). dist/ sigue fuera del repo.
+## 2026-09-23 — Fix: cambiar ciudad no refrescaba el clima - commit 7a3c42d
+- **CAUSA:** en weather-api.js el caché weatherCache NO guardaba qué ciudad se
+  pidió; dentro de los 10 min servía el clima de la ciudad ANTERIOR aunque se
+  hubiera guardado una uba nueva.
+- **Fix:** variable weatherCacheCity; el caché solo se usa si coincide con la
+  ciudad actual (case-insensitive). Probado en simulación: Madrid 20° → guardar
+  París 15° (4 fetches: 2 geocoding + 2 forecast). OK.
+- **Fix 2:** el setInterval de refresco en renderWeather era global/único
+  (weatherTimer) en vez de acumular timers viejos con la config anterior.
+- 16/16 tests OK · build OK · PUSHED a origin/main (7a3c42d).
