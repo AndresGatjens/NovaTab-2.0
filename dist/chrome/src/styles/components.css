@@ -19,8 +19,8 @@
   gap: 6px;
   padding: 12px 14px 10px;
   border-radius: var(--radius, 16px);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--folder-bg);
+  border: 1px solid var(--folder-border);
   backdrop-filter: blur(var(--blur, 8px));
   box-shadow: 0 10px 30px -12px rgba(2, 6, 23, 0.45);
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
@@ -35,7 +35,7 @@
 .card:hover {
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 22px 42px -16px rgba(2, 6, 23, 0.55);
-  background: var(--card-bg-alt);
+  background: var(--folder-bg-hover);
 }
 
 .card:active {
@@ -97,7 +97,7 @@
   place-items: center;
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--folder-preview-item-bg);
 }
 
 .fav {
@@ -204,8 +204,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--folder-bg);
+  border: 1px solid var(--folder-border);
   border-radius: calc(var(--radius) + 8px);
   padding: 8px 10px 8px 6px;
   box-shadow: 0 16px 40px -16px rgba(2, 6, 23, 0.5);
@@ -360,8 +360,8 @@
   justify-content: center;
   padding: 16px 24px;
   border-radius: var(--radius);
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--folder-bg);
+  border: 1px solid var(--folder-border);
   backdrop-filter: blur(var(--blur, 8px));
   -webkit-backdrop-filter: blur(var(--blur, 8px));
   box-shadow: 0 12px 30px -12px rgba(2, 6, 23, 0.4);
@@ -377,18 +377,18 @@
 
 .widget.sized .clock-time,
 .widget.sized .weather-temp {
-  font-size: clamp(12px, 40cqmin, 90px);
+  font-size: clamp(24px, 60cqmin, 110px);
 }
 
 .widget.sized .clock-date,
 .widget.sized .weather-desc {
-  font-size: clamp(9px, 14cqmin, 22px);
+  font-size: clamp(12px, 18cqmin, 26px);
   max-width: 100%;
 }
 
 .widget.sized .weather-setup {
-  font-size: clamp(9px, 12cqmin, 16px);
-  padding: 4px 8px;
+  font-size: clamp(11px, 14cqmin, 18px);
+  padding: 4px 10px;
 }
 
 .widget.sized .calendar {
@@ -399,12 +399,12 @@
 }
 
 .widget.sized .calendar-header {
-  font-size: clamp(10px, 12cqmin, 20px);
+  font-size: clamp(13px, 16cqmin, 24px);
 }
 
 .widget.sized .calendar-weekday,
 .widget.sized .calendar-day {
-  font-size: clamp(8px, 9cqmin, 16px);
+  font-size: clamp(10px, 11cqmin, 18px);
 }
 
 .widget.sized .calendar-week,
@@ -425,8 +425,8 @@
 }
 
 .widget.sized .notes-input {
-  font-size: clamp(9px, 12cqmin, 22px);
-  padding: 4px 8px;
+  font-size: clamp(12px, 15cqmin, 24px);
+  padding: 4px 10px;
 }
 
 .widget.sized.widget-notes,
@@ -452,17 +452,17 @@
 }
 
 .clock-time {
-  font-size: clamp(28px, 5vw, 44px);
-  font-weight: 300;
+  font-size: clamp(34px, 6vw, 54px);
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--text);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .clock-date {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text);
   text-transform: capitalize;
   text-align: center;
@@ -533,19 +533,19 @@
 }
 
 .weather-temp {
-  font-size: clamp(28px, 4vw, 38px);
-  font-weight: 300;
+  font-size: clamp(34px, 5vw, 50px);
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   text-align: center;
   color: var(--text);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .weather-desc {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 500;
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 600;
   text-align: center;
   color: var(--text-muted);
   max-width: 180px;
@@ -564,7 +564,7 @@
 }
 
 .calendar-header {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   text-align: center;
   color: var(--text);
@@ -579,7 +579,7 @@
 }
 
 .calendar-weekday {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   color: var(--text-muted);
@@ -589,8 +589,8 @@
   display: grid;
   place-items: center;
   aspect-ratio: 1;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text);
   border-radius: 8px;
   background: rgba(127, 127, 127, 0.08);
@@ -635,7 +635,7 @@
   color: var(--text);
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.45;
   font-family: inherit;
   user-select: text;

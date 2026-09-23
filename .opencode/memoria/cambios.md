@@ -1,5 +1,26 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Texto de los widgets: más grande y con presencia
+
+- El texto de los widgets se veía "super chiquito y sin presencia". Causas:
+  mínimos del escalado `cqmin` muy bajos (9-12px) y fondo acrílico casi
+  transparente (opacidad 0.12) que quitaba contraste.
+- Subidos los tamaños base: reloj `clamp(34px, 6vw, 54px)` (antes 28-44) y peso
+  700; fecha 16px/600; temperatura `clamp(34px, 5vw, 50px)`/700; descripción
+  14px/600; calendario header 17px, días 14px/600; notas 15px.
+- Escalado `.widget.sized` con mínimos mayores (reloj/temp min 24px vs 12px,
+  fecha/desc min 12px, calendario min 10px, notas min 12px).
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
+## 2026-09-22 — Superficies unificadas al tono acrílico de las carpetas
+
+- Barra de búsqueda (`.search-box`), tarjetas (.card) y widgets (.widget)
+  usaban `--card-bg`/`--card-border` (blanco opaco 0.85) → creaban un segundo
+  tono frente a las carpetas. Ahora todas usan `--folder-bg`/`--folder-border`
+  (translúcido acrílico, el mismo de las carpetas del grid).
+- `.fav-wrap` usa `--folder-preview-item-bg` en lugar del blanco fijo.
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — Widget de Notas / Pendientes
 
 - Nuevo widget tipo `notes`: un textarea editable dentro del widget. El texto se
