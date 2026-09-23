@@ -8,6 +8,7 @@ import { box, resolveFloat } from '../utils/layout.js';
 
 /** Widgets: reloj, fecha, clima, calendario y notas. */
 let clockTimer = null;
+let weatherTimer = null;
 let barEl = null;
 let layerEl = null;
 
@@ -377,8 +378,11 @@ function renderWeather(node, widget, handlers) {
     }
   };
   load();
-  // Refresca cada 10 minutos (acorde al caché del servicio).
-  setInterval(load, 600000);
+  // Refresca cada 10 minutos (acorde al caché del servicio): un único timer
+  // global para que al re-renderizar no se acumulen intervalos con configs
+  // antiguas (p. ej. la ciudad previa).
+  if (weatherTimer) clearInterval(weatherTimer);
+  weatherTimer = setInterval(load, 600000);
 }
 
 const WEEKDAYS_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];

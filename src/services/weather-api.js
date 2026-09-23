@@ -8,11 +8,13 @@ const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 let geoCache = new Map();
 let weatherCache = null;
 let weatherCacheTs = 0;
+let weatherCacheCity = '';
 
 export async function fetchWeather(location) {
   if (!location || !location.trim()) return null;
   const city = location.trim();
-  let place = geoCache.get(city.toLowerCase());
+  const cityKey = city.toLowerCase();
+  let place = geoCache.get(cityKey);
   if (!place) {
     const url = `${GEO_URL}?name=${encodeURIComponent(city)}&count=1&language=es&format=json`;
     const res = await fetch(url);
@@ -20,10 +22,11 @@ export async function fetchWeather(location) {
     const data = await res.json();
     place = data.results?.[0] ?? null;
     if (!place) return null;
-    geoCache.set(city.toLowerCase(), place);
+    geoCache.set(cityKey, place);
   }
   const now = Date.now();
-  if (weatherCache && weatherCacheTs && now - weatherCacheTs < 600000) return weatherCache;
+  // El caché solo sirve si es de la MISMA ciudad y tiene menos de 10 minutos.
+  if (weatherCache && weatherCacheCity === cityKey && weatherCacheTs && now - weatherCacheTs < 600000) return weatherCache;
   const url = `${FORECAST_URL}?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m&timezone=auto&forecast_days=1`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('No se pudo obtener el clima');
@@ -39,6 +42,7 @@ export async function fetchWeather(location) {
   };
   if (weatherCache.temp == null) return null;
   weatherCacheTs = now;
+  weatherCacheCity = cityKey;
   return weatherCache;
 }
 
