@@ -472,3 +472,7 @@
 - IMPORTANTE: Guardar en la herramienta NO cambia la página; hay que pulsar
   "Aplicar del Gestor" en Configuración › Cuadrícula (o importar el JSON).
 - Gestor web: mensaje post-Guardar avisa de ese paso.
+- FIX BUG: context-menu.js tiraba "item.onClick is not a function" al hacer clic
+  en items con submenú sin onClick ("Mover a carpeta…"). Ahora se comprueba
+  typeof onClick antes de llamarlo (también en los items del submenú).
+  16/16 tests OK.

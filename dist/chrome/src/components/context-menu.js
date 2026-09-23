@@ -38,7 +38,7 @@ export function showContextMenu(items, x, y, anchor) {
         subBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           hideContextMenu();
-          subItem.onClick();
+          if (typeof subItem.onClick === 'function') subItem.onClick();
         });
         sub.appendChild(subBtn);
       }
@@ -46,8 +46,10 @@ export function showContextMenu(items, x, y, anchor) {
     }
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      hideContextMenu();
-      item.onClick();
+      if (typeof item.onClick === 'function') {
+        hideContextMenu();
+        item.onClick();
+      }
     });
     menu.appendChild(btn);
   }
