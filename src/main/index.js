@@ -33,6 +33,7 @@ import {
   insertRootTile,
   removeRootTile,
 } from '../services/tiles.js';
+import { setLang, getLang, t } from '../services/i18n.js';
 
 /** Controlador principal de la extensión. */
 class NewTabApp {
@@ -77,6 +78,7 @@ class NewTabApp {
 
   async start() {
     await store.init();
+    setLang(store.getSettings().language || 'es');
     applyTheme();
     applyBackground();
     this.renderWidgets();
@@ -89,6 +91,7 @@ class NewTabApp {
       applyBackground();
       this.renderWidgets();
       this.renderGrid();
+      this.renderSearch();
     });
     // Refresca la cuadrícula cuando se añade un favorito desde el popup
     // (icono anclado en la barra del navegador).

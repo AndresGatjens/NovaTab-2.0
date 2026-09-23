@@ -59,6 +59,8 @@ en el repo:
 
 ## 🤖 ¿Cómo se ve?
 
+![Vista previa de Novantab](screenshots/preview.png)
+
 Abre una nueva pestaña y listo. La extensión sobrescribe la página de "Nueva
 pestaña" de forma nativa (`chrome_url_overrides.newtab`), así que no necesitas
 pinchar en ningún botón: cada pestaña nueva ya es **Novantab**.

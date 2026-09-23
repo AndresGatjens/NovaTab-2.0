@@ -4,6 +4,7 @@ import { uid } from '../utils/id.js';
 
 export const DEFAULT_SETTINGS = {
   version: 1,
+  language: 'es', // 'es' | 'en'
   searchEngine: 'google',
   customSearchUrl: '',
   linkBehavior: 'current', // 'current' | 'new'

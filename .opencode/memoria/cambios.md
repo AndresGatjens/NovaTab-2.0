@@ -377,3 +377,48 @@
   dist/chrome, id efpabklg) + `novatab-quetta.zip`/`novatab-iceraven.xpi`
   subidos de nuevo al Armor por ADB (verificado: longpress dentro, sin
   card-menu).
+
+## 2026-09-22 — i18n ES completo; EN pendiente de 18 claves (RETOMAR)
+- Verificación autoritativa por bloques (`src/services/i18n.js`): **es = 152
+  claves, en = 134**. `ES` está **COMPLETO** — las 18 claves que faltaban ya
+  están insertadas y comprobadas una a una en el bloque es.
+- **PENDIENTE (única tarea):** el bloque `en` NO tiene estas 18 claves usadas.
+  Insertarlas en `en` con su traducción (todas existen en `es`, solo copiar
+  valor EN):
+    1. folderForm.create
+    2. siteForm.add
+    3. siteForm.iconEmpty
+    4. siteForm.iconError
+    5. siteForm.iconFailed
+    6. siteForm.iconHint
+    7. siteForm.iconPreview
+    8. siteForm.iconTitle
+    9. siteForm.saveIcon
+   10. siteForm.useFavicon
+   11. weatherForm.city
+   12. weatherForm.configured
+   13. weatherForm.hint
+   14. widget.clock.ampm
+   15. widget.clock.format
+   16. widget.clock.h12
+   17. widget.clock.h24
+   18. widget.weather.units
+- Cómo verificar al retomar (script fiable, PARSING DE BLOQUES, no grep
+  simple): `python3 _check_i18n.mjs` no funciona (imports relativos); usar el
+  heredoc de `blk('es')`/`blk('en')` con regex `'([^']+)':` y comparar contra
+  las usadas por `\bt\('([^']+)'\)` en `src/**/*.js`. Objetivo: 0 faltantes
+  en ES y EN.
+- SIN commitear: 18 claves de EN aún no están. Hacer commit único cuando EN
+  quede completo (norma: no commitear a medias).
+## 2026-09-22 — i18n COMPLETO (ES+EN) y captura de referencia — LISTO
+- **i18n.js: es=152, en=152, 0 claves faltantes** (verificado por análisis de
+  bloques + uso real vía `t('...')` en src/**/*.js).
+- ES ya estaba completo; se completó EN añadiendo las 18 claves que faltaban
+  (siteForm.add/iconEmpty/iconError/iconFailed/iconHint/iconPreview/
+  iconTitle/saveIcon/useFavicon, folderForm.create, weatherForm.city/
+  configured/hint, widget.clock.ampm/format/h12/h24, widget.weather.units).
+- Tests: 16/16 OK · Build: dist/chrome (44 archivos) OK.
+- **Estado: TODO VERIFICADO. Commit único pendiente de ejecutar:**
+  `git add -A && git commit -m "i18n completo (es/en) + captura de referencia"`
+  seguido de `git tag v2.0.0 && git push origin main --tags` y release
+  "Novantab v2.0.0" (asset novantab-chrome.zip). Revisar antes `git status`.

@@ -6,20 +6,21 @@ import { getDomain, normalizeUrl, isValidIconSource } from '../utils/url.js';
 import { addFolder, renameFolder } from '../services/folders.js';
 import { store } from '../storage/store.js';
 import { updateWidget } from '../services/widgets.js';
+import { t } from '../services/i18n.js';
 
 /** Formulario de añadir/editar sitio. */
 export function renderSiteForm({ bookmark = null, onSave }) {
-  const title = bookmark ? 'Editar sitio' : 'Añadir sitio';
+  const title = bookmark ? t('siteForm.title.edit') : t('siteForm.title.add');
 
-  const nameField = field({ label: 'Nombre', value: bookmark?.title ?? '', required: true });
+  const nameField = field({ label: t('siteForm.name'), value: bookmark?.title ?? '', required: true });
   const urlField = field({
-    label: 'URL',
+    label: t('siteForm.url'),
     value: bookmark?.url ?? '',
     placeholder: 'https://youtube.com',
     required: true,
   });
   const iconField = field({
-    label: 'Icono (opcional)',
+    label: t('siteForm.icon'),
     value: bookmark?.icon ?? '',
     placeholder: 'data:image/... o https://…/icono.png',
   });
@@ -35,7 +36,7 @@ export function renderSiteForm({ bookmark = null, onSave }) {
     }
   });
 
-  const saveBtn = button(bookmark ? 'Guardar' : 'Añadir', async () => {
+  const saveBtn = button(bookmark ? t('siteForm.save') : t('siteForm.add'), async () => {
     const form = {
       title: nameField.input.value,
       url: urlField.input.value,
@@ -48,7 +49,7 @@ export function renderSiteForm({ bookmark = null, onSave }) {
       return;
     }
     if (form.icon && !isValidIconSource(form.icon)) {
-      errors.textContent = 'El icono debe ser una URL https://, data:image/... o dejarlo vacío';
+      errors.textContent = t('siteForm.iconError');
       errors.classList.remove('hidden');
       return;
     }
@@ -57,7 +58,7 @@ export function renderSiteForm({ bookmark = null, onSave }) {
     modal.dispose();
   }, 'primary');
 
-  const cancelBtn = button('Cancelar', () => modal.dispose());
+  const cancelBtn = button(t('siteForm.cancel'), () => modal.dispose());
 
   const body = el('div');
   body.appendChild(nameField.wrap);
@@ -72,14 +73,14 @@ export function renderSiteForm({ bookmark = null, onSave }) {
 /** Formulario dedicado para cambiar el icono de un favorito. */
 export function renderIconForm({ bookmark, onSave }) {
   const source = field({
-    label: 'Icono (URL https:// o data:image/...)',
+    label: t('siteForm.icon'),
     value: bookmark?.icon ?? '',
     placeholder: 'https://…/icono.png',
   });
 
   const preview = el('div', 'icon-preview');
   const previewImg = el('img', 'icon-preview-img');
-  previewImg.alt = 'Vista previa del icono';
+  previewImg.alt = t('siteForm.iconPreview');
   preview.appendChild(previewImg);
   const previewNote = el('span', 'icon-preview-note hidden');
 
@@ -90,13 +91,13 @@ export function renderIconForm({ bookmark, onSave }) {
     errores.classList.add('hidden');
     if (!value) {
       previewImg.classList.add('hidden');
-      previewNote.textContent = 'Vacío: se usará el favicon del sitio (o uno generado).';
+      previewNote.textContent = t('siteForm.iconEmpty');
       previewNote.classList.remove('hidden');
       return;
     }
     if (!isValidIconSource(value)) {
       previewImg.classList.add('hidden');
-      previewNote.textContent = 'El icono debe ser una URL https:// o data:image/...';
+      previewNote.textContent = t('siteForm.iconError');
       previewNote.classList.remove('hidden');
       return;
     }
@@ -107,10 +108,10 @@ export function renderIconForm({ bookmark, onSave }) {
 
   source.input.addEventListener('input', updatePreview);
 
-  const saveBtn = button('Guardar icono', async () => {
+  const saveBtn = button(t('siteForm.saveIcon'), async () => {
     const value = source.input.value.trim();
     if (value && !isValidIconSource(value)) {
-      errores.textContent = 'El icono debe ser una URL https:// o data:image/...';
+      errores.textContent = t('siteForm.iconError');
       errores.classList.remove('hidden');
       return;
     }
@@ -118,24 +119,24 @@ export function renderIconForm({ bookmark, onSave }) {
     modal.dispose();
   }, 'primary');
 
-  const useSiteBtn = button('Usar favicon del sitio', async () => {
+  const useSiteBtn = button(t('siteForm.useFavicon'), async () => {
     await onSave('');
     modal.dispose();
   });
 
-  const cancelBtn = button('Cancelar', () => modal.dispose());
+  const cancelBtn = button(t('siteForm.cancel'), () => modal.dispose());
 
   const body = el('div');
   body.appendChild(source.wrap);
   body.appendChild(preview);
   body.appendChild(errores);
-  body.appendChild(el('p', 'privacy-note', 'Si lo dejas vacío o la imagen falla, se mostrará el favicon del sitio o un icono generado automáticamente.'));
+  body.appendChild(el('p', 'privacy-note', t('siteForm.iconHint')));
 
-  const modal = openModal({ title: 'Cambiar icono', body, actions: [useSiteBtn, cancelBtn, saveBtn], wide: false });
+  const modal = openModal({ title: t('siteForm.iconTitle'), body, actions: [useSiteBtn, cancelBtn, saveBtn], wide: false });
   updatePreview();
   setTimeout(() => previewImg.addEventListener('error', () => {
     previewImg.classList.add('hidden');
-    previewNote.textContent = 'La imagen no se pudo cargar. Revisa la URL.';
+    previewNote.textContent = t('siteForm.iconFailed');
     previewNote.classList.remove('hidden');
   }), 0);
   return modal;
@@ -150,17 +151,17 @@ function guessTitle(urlOrigin) {
 
 /** Formulario de añadir/renombrar carpeta. */
 export function renderFolderForm({ folder = null, onSave }) {
-  const title = folder ? 'Renombrar carpeta' : 'Nueva carpeta';
-  const nameField = field({ label: 'Nombre de la carpeta', value: folder?.title ?? '', required: true });
+  const title = folder ? t('folderForm.title.edit') : t('folderForm.title.add');
+  const nameField = field({ label: t('folderForm.name'), value: folder?.title ?? '', required: true });
 
-  const saveBtn = button(folder ? 'Guardar' : 'Crear', async () => {
+  const saveBtn = button(folder ? t('siteForm.save') : t('folderForm.create'), async () => {
     const name = nameField.input.value.trim();
     if (!name) return;
     await onSave(name);
     modal.dispose();
   }, 'primary');
 
-  const cancelBtn = button('Cancelar', () => modal.dispose());
+  const cancelBtn = button(t('siteForm.cancel'), () => modal.dispose());
 
   const body = el('div');
   body.appendChild(nameField.wrap);
@@ -171,22 +172,22 @@ export function renderFolderForm({ folder = null, onSave }) {
 
 /** Formulario de configuración del widget de clima (Open-Meteo, gratis). */
 export function renderWeatherForm({ widget = null, onSave } = {}) {
-  const title = 'Configurar clima';
-  const locationField = field({ label: 'Ciudad (ej. Guatemala)', value: widget?.config?.location ?? '' });
+  const title = t('widget.configure');
+  const locationField = field({ label: t('weatherForm.city'), value: widget?.config?.location ?? '' });
 
-  const saveBtn = button('Guardar', async () => {
+  const saveBtn = button(t('siteForm.save'), async () => {
     await updateWidget(widget?.id ?? findWeatherId(), {
       config: { location: locationField.input.value.trim() },
     });
-    toast('Clima configurado');
+    toast(t('weatherForm.configured'));
     modal.dispose();
     onSave?.();
   }, 'primary');
 
-  const cancelBtn = button('Cancelar', () => modal.dispose());
+  const cancelBtn = button(t('siteForm.cancel'), () => modal.dispose());
   const body = el('div');
   body.appendChild(locationField.wrap);
-  const hint = el('p', 'privacy-note', 'Se consulta el clima a Open-Meteo (gratuito, sin API key ni cuenta). Solo se envía el nombre de la ciudad.');
+  const hint = el('p', 'privacy-note', t('weatherForm.hint'));
   body.appendChild(hint);
 
   const modal = openModal({ title, body, actions: [cancelBtn, saveBtn] });
@@ -202,8 +203,8 @@ function findWeatherId() {
 export function renderWidgetForm({ widget, onSave } = {}) {
   if (!widget) return null;
   const cfg = { ...(widget.config || {}) };
-  const titles = { clock: 'Editar reloj', date: 'Editar fecha', weather: 'Editar clima', calendar: 'Editar calendario', notes: 'Editar notas / pendientes' };
-  const title = titles[widget.type] ?? 'Editar widget';
+  const titles = { clock: t('widget.clock.edit'), date: t('widget.date.edit'), weather: t('widget.weather.edit'), calendar: t('widget.calendar.edit'), notes: t('widget.notes.edit') };
+  const title = titles[widget.type] ?? t('widget.edit');
 
   const body = el('div', 'widget-form');
 
@@ -219,7 +220,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     clockAmpm = cfg.ampm !== false;
 
     const formatWrap = el('div', 'settings-row');
-    formatWrap.appendChild(el('span', 'settings-label', 'Formato'));
+    formatWrap.appendChild(el('span', 'settings-label', t('widget.clock.format')));
     const seg = el('div', 'seg');
     let chosen = clockFormat;
     const makeBtn = (v, label) => {
@@ -234,13 +235,13 @@ export function renderWidgetForm({ widget, onSave } = {}) {
       });
       return b;
     };
-    seg.appendChild(makeBtn('12h', '12 horas'));
-    seg.appendChild(makeBtn('24h', '24 horas'));
+    seg.appendChild(makeBtn('12h', t('widget.clock.h12')));
+    seg.appendChild(makeBtn('24h', t('widget.clock.h24')));
     formatWrap.appendChild(seg);
     body.appendChild(formatWrap);
 
     const ampmRow = el('div', 'settings-row');
-    ampmRow.appendChild(el('span', 'settings-label', 'Mostrar AM/PM'));
+    ampmRow.appendChild(el('span', 'settings-label', t('widget.clock.ampm')));
     const ampmCheck = el('input', 'checkbox');
     ampmCheck.type = 'checkbox';
     ampmCheck.checked = clockAmpm;
@@ -256,12 +257,12 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     weatherLocation = cfg.location ?? '';
     weatherUnits = cfg.units === 'imperial' ? 'imperial' : 'metric';
 
-    const locField = field({ label: 'Ciudad (ej. Guatemala)', value: weatherLocation });
+    const locField = field({ label: t('weatherForm.city'), value: weatherLocation });
     body.appendChild(locField.wrap);
     const locInput = locField.input;
 
     const unitsWrap = el('div', 'settings-row');
-    unitsWrap.appendChild(el('span', 'settings-label', 'Unidades'));
+    unitsWrap.appendChild(el('span', 'settings-label', t('widget.weather.units')));
     const unitsSeg = el('div', 'seg');
     let units = weatherUnits;
     const makeU = (v, label) => {

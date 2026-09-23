@@ -7,6 +7,7 @@ import { hexToHsl, hslToHex } from '../utils/color.js';
 import { SEARCH_ENGINES } from '../utils/url.js';
 import { toast } from './toast.js';
 import { importFile, downloadConfig } from '../services/export-config.js';
+import { LANGS, setLang, t } from '../services/i18n.js';
 
 /** Paleta de colores para fondos (evita el diálogo nativo que se sale de la página). */
 const PALETTE = [
@@ -113,7 +114,7 @@ export function openSettingsPanel(onClose) {
 
   const panel = el('aside', 'settings-panel');
   const header = el('div', 'settings-header');
-  const title = el('h2', 'settings-title', 'Configuración');
+  const title = el('h2', 'settings-title', t('config.title'));
   const close = el('button', 'modal-close');
   close.type = 'button';
   close.setAttribute('aria-label', 'Cerrar configuración');
@@ -126,19 +127,21 @@ export function openSettingsPanel(onClose) {
 
   const nav = el('nav', 'settings-nav');
   const sections = ['general', 'apariencia', 'widgets', 'cuadricula', 'privacidad', 'datos'];
-  const labels = { general: 'General', apariencia: 'Apariencia', widgets: 'Widgets', cuadricula: 'Cuadrícula', privacidad: 'Privacidad', datos: 'Datos' };
+  const labels = { general: 'config.general', apariencia: 'config.appearance', widgets: 'config.widgets', cuadricula: 'config.grid', privacidad: 'config.privacy', datos: 'config.data' };
   const content = el('div', 'settings-content');
   const navButtons = [];
+  let currentKey = 'general';
 
   for (const key of sections) {
     const btn = el('button', 'settings-tab');
     btn.type = 'button';
-    btn.textContent = labels[key];
+    btn.textContent = t(labels[key]);
     btn.dataset.sec = key;
     btn.setAttribute('aria-controls', `settings-${key}`);
     btn.addEventListener('click', () => {
       navButtons.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
+      currentKey = key;
       renderSection(key);
     });
     navButtons.push(btn);
@@ -157,26 +160,57 @@ export function openSettingsPanel(onClose) {
     else if (key === 'datos') renderDatos(content);
   }
 
+  function refreshLanguage() {
+    title.textContent = t('config.title');
+    for (const key of sections) {
+      const btn = nav.querySelector(`.settings-tab[data-sec="${key}"]`);
+      if (btn) btn.textContent = t(labels[key]);
+    }
+    renderSection(currentKey);
+  }
+
   function sectionTitle(text) {
-    const h = el('h3', 'settings-section-title', text);
+    const h = el('h3', 'settings-section-title', t(text));
     return h;
   }
 
   function renderGeneral(host) {
-    host.appendChild(sectionTitle('Buscar'));
+    host.appendChild(sectionTitle('config.language'));
     const settings = store.getSettings();
-    row(host, 'Motor de búsqueda', selectEngine(settings.searchEngine));
-    row(host, 'URL personalizada', inputText(settings.customSearchUrl, async (v) => {
+    const languageWrap = el('div', 'seg');
+    for (const [code, label] of LANGS) {
+      const btn = el('button', 'seg-btn');
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.dataset.lang = code;
+      if ((settings.language || 'es') === code) btn.classList.add('active');
+      btn.addEventListener('click', async () => {
+        setLang(code);
+        await updateSettings({ language: code });
+        languageWrap.querySelectorAll('.seg-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        refreshLanguage();
+        document.dispatchEvent(new CustomEvent('nova:theme'));
+        toast(t('config.language.changed'));
+      });
+      languageWrap.appendChild(btn);
+    }
+    host.appendChild(languageWrap);
+    host.appendChild(el('p', 'settings-note', t('config.language.note')));
+
+    host.appendChild(sectionTitle('config.search'));
+    row(host, t('config.engine'), selectEngine(settings.searchEngine));
+    row(host, t('config.customUrl'), inputText(settings.customSearchUrl, async (v) => {
       await updateSettings({ customSearchUrl: v.trim() });
-      toast('Motor personalizado actualizado');
+      toast(t('config.engine.custom.updated'));
     }, `https://example.com/search?q={query}`));
-    host.appendChild(sectionTitle('Enlaces'));
-    row(host, 'Abrir enlaces favoritos', selectLinkBehavior(settings.linkBehavior));
+    host.appendChild(sectionTitle('config.links'));
+    row(host, t('config.linkBehavior'), selectLinkBehavior(settings.linkBehavior));
   }
 
   function selectEngine(value) {
     const sel = el('select', 'sel');
-    const options = [...Object.keys(SEARCH_ENGINES).map((k) => [k, SEARCH_ENGINES[k].name]), ['custom', 'Personalizado']];
+    const options = [...Object.keys(SEARCH_ENGINES).map((k) => [k, SEARCH_ENGINES[k].name]), ['custom', t('config.engine.custom')]];
     for (const [key, name] of options) {
       const opt = el('option', '', name);
       opt.value = key;
@@ -185,14 +219,14 @@ export function openSettingsPanel(onClose) {
     sel.value = value;
     sel.addEventListener('change', async () => {
       await updateSettings({ searchEngine: sel.value });
-      toast('Motor de búsqueda cambiado');
+      toast(t('config.engine.changed'));
     });
     return sel;
   }
 
   function selectLinkBehavior(value) {
     const sel = el('select', 'sel');
-    for (const [v, l] of [['current', 'En la misma pestaña'], ['new', 'En pestaña nueva']]) {
+    for (const [v, l] of [['current', t('config.link.current')], ['new', t('config.link.new')]]) {
       const opt = el('option', '', l);
       opt.value = v;
       sel.appendChild(opt);
@@ -205,10 +239,10 @@ export function openSettingsPanel(onClose) {
   }
 
   function renderApariencia(host) {
-    host.appendChild(sectionTitle('Tema'));
+    host.appendChild(sectionTitle('config.theme'));
     const settings = store.getSettings();
     const themeWrap = el('div', 'seg');
-    for (const [v, l] of [['light', 'Claro'], ['dark', 'Oscuro'], ['auto', 'Automático']]) {
+    for (const [v, l] of [['light', t('config.theme.light')], ['dark', t('config.theme.dark')], ['auto', t('config.theme.auto')]]) {
       const btn = el('button', 'seg-btn');
       btn.type = 'button';
       btn.textContent = l;
@@ -223,9 +257,9 @@ export function openSettingsPanel(onClose) {
     }
     host.appendChild(themeWrap);
 
-    host.appendChild(sectionTitle('Color de tema'));
+    host.appendChild(sectionTitle('config.accent'));
     const note = el('p', 'settings-note');
-    note.textContent = 'Cambia los colores de la cuadrícula, la barra de búsqueda y los botones. El fondo se configura aparte, abajo.';
+    note.textContent = t('config.accent.note');
     host.appendChild(note);
     const accentState = store.getSettings().accentCustom && store.getSettings().accent === 'custom'
       ? store.getSettings().accentCustom
@@ -244,17 +278,17 @@ export function openSettingsPanel(onClose) {
     };
     host.appendChild(palette(null, accentBase, applyAccent));
     const customLabel = el('div', 'color-label-row');
-    customLabel.appendChild(el('span', 'color-label', 'Personalizado'));
+    customLabel.appendChild(el('span', 'color-label', t('config.accent.custom')));
     host.appendChild(customLabel);
     accentBar = colorBar(accentBase, applyAccent);
     host.appendChild(accentBar);
 
-    host.appendChild(sectionTitle('Fondo'));
+    host.appendChild(sectionTitle('config.background'));
     const bgWrap = el('div', 'bg-options');
     const types = [
-      ['color', 'Color sólido'],
-      ['gradient', 'Gradiente'],
-      ['image', 'Imagen'],
+      ['color', t('config.bg.color')],
+      ['gradient', t('config.bg.gradient')],
+      ['image', t('config.bg.image')],
     ];
     for (const [t, l] of types) {
       const btn = el('button', 'bg-type');
@@ -273,57 +307,57 @@ export function openSettingsPanel(onClose) {
     host.appendChild(bgWrap);
 
     if (settings.background.type === 'color') {
-      colorBlock(host, 'Color', settings.background.color, async (v) => {
+      colorBlock(host, t('config.bg.colorLabel'), settings.background.color, async (v) => {
         await updateBackground({ color: v });
         applyTheme();
       });
     }
     if (settings.background.type === 'gradient') {
-      colorBlock(host, 'De', settings.background.gradient.from, async (v) => {
+      colorBlock(host, t('config.bg.from'), settings.background.gradient.from, async (v) => {
         await updateBackground({ gradient: { ...settings.background.gradient, from: v } });
         applyTheme();
       });
-      colorBlock(host, 'A', settings.background.gradient.to, async (v) => {
+      colorBlock(host, t('config.bg.to'), settings.background.gradient.to, async (v) => {
         await updateBackground({ gradient: { ...settings.background.gradient, to: v } });
         applyTheme();
       });
-      row(host, 'Ángulo (°)', inputRange(settings.background.gradient.angle, 0, 360, 15, async (v) => {
+      row(host, t('config.bg.angle'), inputRange(settings.background.gradient.angle, 0, 360, 15, async (v) => {
         await updateBackground({ gradient: { ...settings.background.gradient, angle: Number(v) } });
         applyTheme();
       }));
     }
     if (settings.background.type === 'image') {
-      row(host, 'Imagen por URL', inputText(settings.background.image, async (v) => {
+      row(host, t('config.bg.url'), inputText(settings.background.image, async (v) => {
         await updateBackground({ image: v.trim() });
         applyTheme();
       }, 'https://...'));
-      row(host, 'Imagen local', filePicker(async (f) => {
+      row(host, t('config.bg.local'), filePicker(async (f) => {
         const dataUrl = await readAsDataURL(f);
         await updateBackground({ image: dataUrl });
         applyTheme();
-        toast('Imagen de fondo establecida');
+        toast(t('config.bg.set'));
       }));
     }
 
-    host.appendChild(sectionTitle('Tarjetas'));
-    row(host, `Transparencia (${Math.round(settings.transparency * 100)}%)`, inputRange(settings.transparency, 0.3, 1, 0.05, async (v) => {
+    host.appendChild(sectionTitle('config.cards'));
+    row(host, `${t('config.cards.transparency')} (${Math.round(settings.transparency * 100)}%)`, inputRange(settings.transparency, 0.3, 1, 0.05, async (v) => {
       await updateSettings({ transparency: Number(v) });
       applyTheme();
     }));
-    row(host, `Desenfoque (${settings.blur}px)`, inputRange(settings.blur, 0, 24, 1, async (v) => {
+    row(host, `${t('config.cards.blur')} (${settings.blur}px)`, inputRange(settings.blur, 0, 24, 1, async (v) => {
       await updateSettings({ blur: Number(v) });
       applyTheme();
     }));
-    row(host, `Radio de tarjetas (${settings.cardRadius}px)`, inputRange(settings.cardRadius, 4, 32, 1, async (v) => {
+    row(host, `${t('config.cards.radius')} (${settings.cardRadius}px)`, inputRange(settings.cardRadius, 4, 32, 1, async (v) => {
       await updateSettings({ cardRadius: Number(v) });
       applyTheme();
     }));
   }
 
   function renderWidgets(host) {
-    host.appendChild(sectionTitle('Widgets'));
+    host.appendChild(sectionTitle('config.widgets'));
     const note = el('p', 'settings-note');
-    note.textContent = 'Restaura los widgets que ocultaste o añade los que falten.';
+    note.textContent = t('config.widgets.note');
     host.appendChild(note);
 
     const all = widgets();
@@ -334,31 +368,31 @@ export function openSettingsPanel(onClose) {
     const hasNotes = all.some((w) => w.type === 'notes');
 
     if (visible.length) {
-      host.appendChild(sectionTitle('Activos'));
+      host.appendChild(sectionTitle('config.widgets.active'));
       for (const w of visible) {
-        row(host, widgetLabel(w.type), buttonSmall('Ocultar', async () => {
+        row(host, widgetLabel(w.type), buttonSmall(t('config.widgets.hide'), async () => {
           await updateWidget(w.id, { enabled: false });
           renderWidgets(host);
         }));
       }
     }
     if (hidden.length) {
-      host.appendChild(sectionTitle('Ocultos'));
+      host.appendChild(sectionTitle('config.widgets.hidden'));
       for (const w of hidden) {
-        row(host, widgetLabel(w.type), buttonSmall('Restaurar', async () => {
+        row(host, widgetLabel(w.type), buttonSmall(t('config.widgets.restore'), async () => {
           await updateWidget(w.id, { enabled: true });
           renderWidgets(host);
         }));
       }
     }
     const missing = [];
-    if (!hasWeather) missing.push(['weather', 'Clima (Open-Meteo)']);
-    if (!hasCalendar) missing.push(['calendar', 'Calendario']);
-    if (!hasNotes) missing.push(['notes', 'Notas / Pendientes']);
+    if (!hasWeather) missing.push(['weather', t('config.widgets.weather')]);
+    if (!hasCalendar) missing.push(['calendar', t('config.widgets.calendar')]);
+    if (!hasNotes) missing.push(['notes', t('config.widgets.notes')]);
     if (missing.length) {
-      host.appendChild(sectionTitle('Más widgets'));
+      host.appendChild(sectionTitle('config.widgets.more'));
       for (const [type, label] of missing) {
-        row(host, label, buttonSmall('Añadir', async () => {
+        row(host, label, buttonSmall(t('config.widgets.add'), async () => {
           await addWidget(type);
           renderWidgets(host);
         }));
@@ -366,13 +400,13 @@ export function openSettingsPanel(onClose) {
     }
     if (!visible.length && !hidden.length) {
       const p = el('p', 'settings-note');
-      p.textContent = 'No hay widgets. Añade alguno desde "Más widgets".';
+      p.textContent = t('config.widgets.none');
       host.appendChild(p);
     }
   }
 
   function widgetLabel(type) {
-    return { clock: 'Reloj', date: 'Fecha', weather: 'Clima', calendar: 'Calendario', notes: 'Notas / Pendientes' }[type] ?? type;
+    return { clock: t('config.widgets.clock'), date: t('config.widgets.date'), weather: t('config.widgets.weather2'), calendar: t('config.widgets.calendar'), notes: t('config.widgets.notes') }[type] ?? type;
   }
 
   function buttonSmall(label, onClick) {
@@ -385,63 +419,63 @@ export function openSettingsPanel(onClose) {
 
   function renderCuadricula(host) {
     const settings = store.getSettings();
-    host.appendChild(sectionTitle('Cuadrícula'));
-    row(host, `Columnas (${settings.gridColumns})`, inputRange(settings.gridColumns, 3, 12, 1, async (v) => {
+    host.appendChild(sectionTitle('config.grid'));
+    row(host, `${t('config.grid.columns')} (${settings.gridColumns})`, inputRange(settings.gridColumns, 3, 12, 1, async (v) => {
       await updateSettings({ gridColumns: Number(v) });
       applyTheme();
     }));
-    row(host, `Filas por página (${settings.gridRows})`, inputRange(settings.gridRows, 1, 8, 1, async (v) => {
+    row(host, `${t('config.grid.rows')} (${settings.gridRows})`, inputRange(settings.gridRows, 1, 8, 1, async (v) => {
       await updateSettings({ gridRows: Number(v) });
       applyTheme();
     }));
-    row(host, `Tamaño iconos (${settings.iconSize}px)`, inputRange(settings.iconSize, 32, 96, 2, async (v) => {
+    row(host, `${t('config.grid.iconSize')} (${settings.iconSize}px)`, inputRange(settings.iconSize, 32, 96, 2, async (v) => {
       await updateSettings({ iconSize: Number(v) });
       applyTheme();
     }));
-    row(host, `Espaciado (${settings.gridSpacing}px)`, inputRange(settings.gridSpacing, 4, 48, 2, async (v) => {
+    row(host, `${t('config.grid.spacing')} (${settings.gridSpacing}px)`, inputRange(settings.gridSpacing, 4, 48, 2, async (v) => {
       await updateSettings({ gridSpacing: Number(v) });
       applyTheme();
     }));
-    host.appendChild(sectionTitle('Visibilidad'));
-    row(host, 'Mostrar nombres', checkbox(settings.showLabels, async (v) => {
+    host.appendChild(sectionTitle('config.grid.visibility'));
+    row(host, t('config.grid.labels'), checkbox(settings.showLabels, async (v) => {
       await updateSettings({ showLabels: v });
       applyTheme();
     }));
-    row(host, 'Mostrar favicons', checkbox(settings.showFavicons, async (v) => {
+    row(host, t('config.grid.favicons'), checkbox(settings.showFavicons, async (v) => {
       await updateSettings({ showFavicons: v });
       applyTheme();
     }));
-    row(host, 'Animaciones', checkbox(settings.animations, async (v) => {
+    row(host, t('config.grid.animations'), checkbox(settings.animations, async (v) => {
       await updateSettings({ animations: v });
       applyTheme();
     }));
   }
 
   function renderPrivacidad(host) {
-    host.appendChild(sectionTitle('Privacidad'));
+    host.appendChild(sectionTitle('config.privacy'));
     const p = el('p', 'privacy-note');
     p.innerHTML = `
       <ul>
-        <li>Todo se almacena en el <strong>storage local del navegador</strong>.</li>
-        <li>No se envían favoritos ni datos a servidores externos.</li>
-        <li>No se recopila historial ni datos personales.</li>
-        <li>El clima requiere una API externa si la configuras; por defecto está desactivado.</li>
+        <li>${t('config.privacy.note1')}</li>
+        <li>${t('config.privacy.note2')}</li>
+        <li>${t('config.privacy.note3')}</li>
+        <li>${t('config.privacy.note4')}</li>
       </ul>`;
     host.appendChild(p);
   }
 
   function renderDatos(host) {
-    host.appendChild(sectionTitle('Datos'));
+    host.appendChild(sectionTitle('config.data'));
     const rowBtns = el('div', 'data-actions');
 
-    const exportBtn = el('button', 'btn btn-primary', 'Exportar configuración');
+    const exportBtn = el('button', 'btn btn-primary', t('config.data.export'));
     exportBtn.type = 'button';
     exportBtn.addEventListener('click', async () => {
       await downloadConfig();
-      toast('Configuración exportada');
+      toast(t('config.data.exported'));
     });
 
-    const importBtn = el('button', 'btn', 'Importar configuración');
+    const importBtn = el('button', 'btn', t('config.data.import'));
     importBtn.type = 'button';
     importBtn.addEventListener('click', async () => {
       const file = await importFile();
@@ -449,7 +483,7 @@ export function openSettingsPanel(onClose) {
         if (file?.error) toast(file.error, 'error');
         return;
       }
-      toast('Configuración importada', 'success');
+      toast(t('config.data.imported'), 'success');
       dispose();
     });
 
@@ -542,7 +576,7 @@ function filePicker(onChange) {
   input.accept = 'image/*';
   const btn = el('button', 'btn');
   btn.type = 'button';
-  btn.textContent = 'Elegir imagen…';
+  btn.textContent = t('config.bg.pick');
   btn.addEventListener('click', () => input.click());
   input.addEventListener('change', () => {
     const f = input.files[0];

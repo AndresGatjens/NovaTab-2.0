@@ -3,6 +3,7 @@ import { store } from '../storage/store.js';
 import { enabledWidgets, updateWidget, widgets, addWidget } from '../services/widgets.js';
 import { showContextMenu } from './context-menu.js';
 import { fetchWeather, weatherLabel } from '../services/weather-api.js';
+import { t, getLang } from '../services/i18n.js';
 
 /** Widgets: reloj, fecha y clima (clima preparado, sin API aún). */
 let clockTimer = null;
@@ -58,8 +59,8 @@ function renderWidget(widget, handlers) {
 
   const toggle = el('button', 'widget-close');
   toggle.type = 'button';
-  toggle.title = 'Ocultar widget';
-  toggle.setAttribute('aria-label', 'Ocultar widget');
+  toggle.title = t('widget.hide');
+  toggle.setAttribute('aria-label', t('widget.hide'));
   toggle.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
   toggle.addEventListener('click', () => {
     updateWidget(widget.id, { enabled: false });
@@ -70,8 +71,8 @@ function renderWidget(widget, handlers) {
   // Asa de redimensionado en la esquina inferior derecha (estilo Android).
   const resize = el('button', 'widget-resize');
   resize.type = 'button';
-  resize.title = 'Redimensionar (arrastrar la esquina)';
-  resize.setAttribute('aria-label', 'Redimensionar widget');
+  resize.title = t('widget.resize');
+  resize.setAttribute('aria-label', t('widget.resize'));
   resize.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 20V16H6V18H18V6H16V4H20V20H4Z" opacity="0"/><path fill="currentColor" d="M20 4H16v2h2v2h-6V4h-2v2H8v2H6V4H4v2h2v2h2v6H6v2H4v2h2v2h2v2h2v-2h2v-2h-6v-2h6V8h2V6h2V4q0-1 1-1h1V4Z"/></svg>';
   node.appendChild(resize);
 
@@ -83,13 +84,13 @@ function renderWidget(widget, handlers) {
     e.stopPropagation();
     const items = [
       {
-        label: 'Editar…',
+        label: t('ctx.edit'),
         onClick: () => {
           if (handlers.onEdit) handlers.onEdit(widget);
         },
       },
       {
-        label: node.classList.contains('floating') ? 'Volver a la barra' : 'Ocultar widget',
+        label: node.classList.contains('floating') ? t('widget.toBar') : t('widget.hide'),
         onClick: () => {
           if (node.classList.contains('floating')) {
             updateWidget(widget.id, { config: { ...(widget.config || {}), x: undefined, y: undefined } });
@@ -102,7 +103,7 @@ function renderWidget(widget, handlers) {
     ];
     if (node.classList.contains('floating')) {
       items.push({
-        label: 'Ocultar widget',
+        label: t('widget.hide'),
         onClick: () => {
           updateWidget(widget.id, { enabled: false });
           if (handlers.onChange) handlers.onChange();
@@ -235,7 +236,7 @@ function renderDate(node, widget) {
   const date = el('div', 'clock-date');
   const now = new Date();
   try {
-    const locale = widget.config.locale || store.getSettings()?.locale || 'es';
+    const locale = getLang() === 'en' ? 'en' : 'es';
     date.textContent = now.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   } catch {
     date.textContent = now.toLocaleDateString();
@@ -247,7 +248,7 @@ function renderWeather(node, widget, handlers) {
   const config = widget.config || {};
   const wrap = el('div', 'weather');
   if (!config.location) {
-    const btn = el('button', 'weather-setup', 'Configurar clima');
+    const btn = el('button', 'weather-setup', t('widget.configure'));
     btn.type = 'button';
     btn.addEventListener('click', () => {
       if (handlers.onWeatherConfig) handlers.onWeatherConfig(widget);
@@ -255,7 +256,7 @@ function renderWeather(node, widget, handlers) {
     wrap.appendChild(btn);
   } else {
     const temp = el('div', 'weather-temp', '—');
-    const desc = el('div', 'weather-desc', 'Cargando…');
+    const desc = el('div', 'weather-desc', t('weather.loading'));
     wrap.appendChild(temp);
     wrap.appendChild(desc);
 
@@ -264,7 +265,7 @@ function renderWeather(node, widget, handlers) {
         const w = await fetchWeather(config.location);
         if (!w) {
           temp.textContent = '—';
-          desc.textContent = 'No se encontró la ciudad';
+          desc.textContent = t('weather.notFound');
           return;
         }
         const imperial = config.units === 'imperial';
@@ -274,10 +275,10 @@ function renderWeather(node, widget, handlers) {
         temp.textContent = `${displayTemp(w.temp)}${unit}`;
         const place = w.place !== config.location.trim() ? w.place : '';
         desc.textContent = `${weatherLabel(w.code)}${place ? ` · ${place}` : ''}`;
-        desc.title = `${weatherLabel(w.code)} · Sensación ${displayTemp(w.feels ?? w.temp)}${unit} · Humedad ${w.humidity}% · Viento ${displaySpeed(w.wind)} ${imperial ? 'mph' : 'km/h'}`;
+        desc.title = `${weatherLabel(w.code)} · ${t('weather.feels')} ${displayTemp(w.feels ?? w.temp)}${unit} · ${t('weather.humidity')} ${w.humidity}% · ${t('weather.wind')} ${displaySpeed(w.wind)} ${imperial ? 'mph' : 'km/h'}`;
       } catch {
         temp.textContent = '—';
-        desc.textContent = 'Sin conexión';
+        desc.textContent = t('weather.offline');
       }
     };
     load();
@@ -288,12 +289,17 @@ function renderWeather(node, widget, handlers) {
 }
 
 const WEEKDAYS_SHORT = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const WEEKDAYS_SHORT_EN = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+function weekdayShorts() {
+  return getLang() === 'en' ? WEEKDAYS_SHORT_EN : WEEKDAYS_SHORT;
+}
 
 function renderCalendar(node, widget) {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
-  const locale = widget.config.locale || store.getSettings()?.locale || 'es';
+  const locale = getLang() === 'en' ? 'en' : 'es';
 
   const wrap = el('div', 'calendar');
   const header = el('div', 'calendar-header');
@@ -306,7 +312,7 @@ function renderCalendar(node, widget) {
   wrap.appendChild(header);
 
   const week = el('div', 'calendar-week');
-  for (const day of WEEKDAYS_SHORT) {
+  for (const day of weekdayShorts()) {
     const cell = el('span', 'calendar-weekday', day);
     week.appendChild(cell);
   }
@@ -333,9 +339,9 @@ function renderCalendar(node, widget) {
 function renderNotes(node, widget, handlers) {
   const wrap = el('div', 'notes');
   const area = el('textarea', 'notes-input');
-  area.placeholder = 'Pendientes…';
+  area.placeholder = t('widget.notes.placeholder');
   area.value = widget.config?.text ?? '';
-  area.setAttribute('aria-label', 'Notas y pendientes');
+  area.setAttribute('aria-label', t('widget.notes.title'));
   area.addEventListener('input', () => {
     clearTimeout(area._t);
     area._t = setTimeout(() => {
@@ -348,8 +354,8 @@ function renderNotes(node, widget, handlers) {
   // Botón "+": crea otra nota/pendientes sin salir de esta.
   const addBtn = el('button', 'widget-addnote');
   addBtn.type = 'button';
-  addBtn.title = 'Nueva nota';
-  addBtn.setAttribute('aria-label', 'Nueva nota');
+  addBtn.title = t('widget.notes.title');
+  addBtn.setAttribute('aria-label', t('widget.notes.title'));
   addBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>';
   addBtn.addEventListener('click', async () => {
     await addWidget('notes');
