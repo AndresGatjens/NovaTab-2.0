@@ -448,6 +448,15 @@
   -webkit-user-select: none;
 }
 
+.weather {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
 .weather-setup {
   font-size: 12px;
   padding: 6px 10px;
@@ -461,6 +470,7 @@
   font-weight: 300;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  text-align: center;
   color: var(--text);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -469,8 +479,8 @@
   margin-top: 2px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted);
   text-align: center;
+  color: var(--text-muted);
   max-width: 180px;
 }
 

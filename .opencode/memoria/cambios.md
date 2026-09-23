@@ -1,5 +1,13 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — Clima: temperatura centrada en el cuadro
+
+- La temperatura del widget de clima salía desplazada/de lado. Nueva regla
+  `.weather`: flex column con `align-items/justify-content: center`,
+  `width: 100%` y `text-align: center`; además `text-align: center` en
+  `.weather-temp`. Ahora la temperatura queda centrada dentro del cuadro.
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — Widget de Calendario
 
 - NUEVO widget de **Calendario** (`type: 'calendar'`): muestra el mes actual con
