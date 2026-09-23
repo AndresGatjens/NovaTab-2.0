@@ -7,6 +7,7 @@ import { hexToHsl, hslToHex } from '../utils/color.js';
 import { SEARCH_ENGINES } from '../utils/url.js';
 import { toast } from './toast.js';
 import { importFile, downloadConfig } from '../services/export-config.js';
+import { buildExportPayload, validateImport, applyImport } from '../services/import-export.js';
 import { LANGS, setLang, t } from '../services/i18n.js';
 
 /** URL del Gestor Nova (herramienta local para organizar carpetas y enlaces). */
@@ -22,6 +23,41 @@ async function checkGestor(statusEl) {
     statusEl.textContent = t('config.gestor.offline');
     statusEl.classList.remove('ok');
   }
+}
+
+/** Envía la configuración actual de la extensión al Gestor (archivo local). */
+async function gestorPush() {
+  try {
+    const r = await fetch(`${GESTOR_URL}/api/guardar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: buildExportPayload() }),
+      signal: AbortSignal.timeout(5000),
+    });
+    const j = await r.json().catch(() => ({}));
+    return r.ok && j.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Aplica en la extensión los cambios guardados en el Gestor. */
+async function gestorPull() {
+  let data;
+  try {
+    const r = await fetch(`${GESTOR_URL}/api/datos`, { signal: AbortSignal.timeout(5000) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok || !j.data) return false;
+    data = j.data;
+  } catch {
+    return false;
+  }
+  const { ok, errors, data: valid } = validateImport(data);
+  if (!ok) {
+    toast(errors.join(' '), 'error');
+    return false;
+  }
+  return valid;
 }
 
 /** Paleta de colores para fondos (evita el diálogo nativo que se sale de la página). */
@@ -474,9 +510,29 @@ export function openSettingsPanel(onClose) {
     const openBtn = el('button', 'btn btn-primary', t('config.gestor.open'));
     openBtn.type = 'button';
     openBtn.addEventListener('click', () => chrome.tabs.create({ url: GESTOR_URL }));
+    const pushBtn = el('button', 'btn', t('config.gestor.push'));
+    pushBtn.type = 'button';
+    pushBtn.addEventListener('click', async () => {
+      const ok = await gestorPush();
+      toast(ok ? t('config.gestor.sent') : t('config.gestor.error'), ok ? 'success' : 'error');
+    });
+    const pullBtn = el('button', 'btn', t('config.gestor.pull'));
+    pullBtn.type = 'button';
+    pullBtn.addEventListener('click', async () => {
+      const valid = await gestorPull();
+      if (!valid) {
+        toast(t('config.gestor.error'), 'error');
+        return;
+      }
+      await applyImport(valid);
+      toast(t('config.gestor.applied'), 'success');
+      dispose();
+    });
     const status = el('span', 'gestor-status', t('config.gestor.offline'));
     checkGestor(status);
     gestorBtns.appendChild(openBtn);
+    gestorBtns.appendChild(pushBtn);
+    gestorBtns.appendChild(pullBtn);
     gestorBtns.appendChild(status);
     host.appendChild(gestorBtns);
   }

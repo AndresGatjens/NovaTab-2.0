@@ -462,3 +462,13 @@
 - CAPTURAS de referencia subidas: screenshots/settings-cuadricula.png
   (panel con el botón Gestor Nova) y screenshots/gestor-nova.png (la app),
   referenciadas en el README en la sección "¿Cómo se ve?".
+- SINCRONIZACIÓN en ambas direcciones (sección Cuadrícula → Gestor Nova):
+  - "Enviar a Gestor": POST /api/guardar con buildExportPayload() → el
+    servidor valida y escribe el archivo (ya existía el endpoint).
+  - "Aplicar del Gestor": GET /api/datos → validateImport/applyImport →
+    toast + dispose() (onClose re-renderiza el grid).
+  - i18n: config.gestor.push/pull/sent/applied/error + nota actualizada
+    (es/en).
+- IMPORTANTE: Guardar en la herramienta NO cambia la página; hay que pulsar
+  "Aplicar del Gestor" en Configuración › Cuadrícula (o importar el JSON).
+- Gestor web: mensaje post-Guardar avisa de ese paso.
