@@ -503,3 +503,18 @@
 - Verificación: 16/16 tests OK · sintaxis OK · build OK (45 archivos) ·
   i18n ES=172 EN=172 con 0 claves faltantes de las 128 usadas.
 - Commit c10bbbe pusheado a origin/main.
+## 2026-09-23 — Clima arreglado: multiselección de detalles + edición real - commit d120a03
+- **BUG RAIZ:** renderWeatherForm guardaba `config: { location }` REEMPLAZANDO todo el
+  config (borraba unidades, detalle, textScale...). Además el detalle era 1 sola opción
+  y una vez guardada la ubicación no había botón para corregirla.
+- **Fix flujo:** eliminado renderWeatherForm y su enlace onWeatherConfig. El botón
+  "Configurar clima" y el menú contextual "Editar…" abren el MISMO editor
+  (renderWidgetForm) con ubicación siempre editable.
+- **Detalles multiselección:** config.details pasa a ser ARRAY. Checkboxes
+  (descripción/viento/humedad/sensación) se marcan varias a la vez y el widget
+  muestra una línea por opción marcada (`.weather-lines`/`.weather-line`).
+  Retrocompat: si existe `detail` string se migra a `[detail]`.
+- i18n: quitadas weatherForm.configured y weatherForm.hint (sin uso). ES=EN=170.
+- Verificado: 16/16 tests · build OK (45) · sintaxis OK · API Open-Meteo OK
+  (geocoding 3598132 Ciudad de Guatemala + forecast 200 OK).
+- PUSHED a origin/main (d120a03). dist/ sigue fuera del repo.
