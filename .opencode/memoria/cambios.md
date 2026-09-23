@@ -456,3 +456,6 @@
 - manifest.chrome.json: host_permission http://127.0.0.1:8734/* añadido para
   poder comprobar el estado del servidor desde la extensión.
 - Build OK (dist/chrome 44 archivos), sintaxis OK.
+- MOVIMIENTO: según el usuario, la sección "Gestor Nova" encaja mejor en la
+  pestaña Cuadrícula (maneja carpetas/enlaces del grid) que en Datos.
+  Movida de renderDatos a renderCuadricula (al final). Build OK.

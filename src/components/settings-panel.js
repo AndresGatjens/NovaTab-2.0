@@ -464,6 +464,21 @@ export function openSettingsPanel(onClose) {
       await updateSettings({ animations: v });
       applyTheme();
     }));
+
+    host.appendChild(sectionTitle('config.gestor.title'));
+    const gestorNote = el('p', 'settings-note');
+    gestorNote.textContent = t('config.gestor.note');
+    host.appendChild(gestorNote);
+
+    const gestorBtns = el('div', 'data-actions');
+    const openBtn = el('button', 'btn btn-primary', t('config.gestor.open'));
+    openBtn.type = 'button';
+    openBtn.addEventListener('click', () => chrome.tabs.create({ url: GESTOR_URL }));
+    const status = el('span', 'gestor-status', t('config.gestor.offline'));
+    checkGestor(status);
+    gestorBtns.appendChild(openBtn);
+    gestorBtns.appendChild(status);
+    host.appendChild(gestorBtns);
   }
 
   function renderPrivacidad(host) {
@@ -505,21 +520,6 @@ export function openSettingsPanel(onClose) {
     rowBtns.appendChild(exportBtn);
     rowBtns.appendChild(importBtn);
     host.appendChild(rowBtns);
-
-    host.appendChild(sectionTitle('config.gestor.title'));
-    const gestorNote = el('p', 'settings-note');
-    gestorNote.textContent = t('config.gestor.note');
-    host.appendChild(gestorNote);
-
-    const gestorBtns = el('div', 'data-actions');
-    const openBtn = el('button', 'btn btn-primary', t('config.gestor.open'));
-    openBtn.type = 'button';
-    openBtn.addEventListener('click', () => chrome.tabs.create({ url: GESTOR_URL }));
-    const status = el('span', 'gestor-status', t('config.gestor.offline'));
-    checkGestor(status);
-    gestorBtns.appendChild(openBtn);
-    gestorBtns.appendChild(status);
-    host.appendChild(gestorBtns);
   }
 
   function row(parent, label, control) {
