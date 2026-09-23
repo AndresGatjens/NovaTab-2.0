@@ -19,7 +19,6 @@ import {
   addFolder,
   renameFolder,
   removeFolder,
-  topLevelFolders,
 } from '../services/folders.js';
 import { renderSiteForm, renderFolderForm, renderWeatherForm, renderIconForm, renderWidgetForm } from './forms.js';
 import { normalizeUrl } from '../utils/url.js';
@@ -93,6 +92,14 @@ class NewTabApp {
       this.renderGrid();
       this.renderSearch();
     });
+    // Al cambiar el tamaño de la ventana, los widgets flotantes se recolocan
+    // para seguir dentro de la pantalla sin salirse ni superponerse (guardan
+    // su posición corregida y quedan persistentes si no se tocan).
+    let widgetResizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(widgetResizeTimer);
+      widgetResizeTimer = setTimeout(() => this.renderWidgets(), 150);
+    });
     // Refresca la cuadrícula cuando se añade un favorito desde el popup
     // (icono anclado en la barra del navegador).
     const onStorageChanged = browserAPI.raw.storage && browserAPI.raw.storage.onChanged;
@@ -154,7 +161,7 @@ class NewTabApp {
 
   renderWidgets() {
     this.widgetsSlot.innerHTML = '';
-    const bar = renderWidgetsBar(null, {
+    const result = renderWidgetsBar(null, {
       onChange: () => {
         this.renderWidgets();
       },
@@ -167,7 +174,20 @@ class NewTabApp {
         this.renderWidgets();
       },
     });
-    this.widgetsSlot.appendChild(bar);
+    this.widgetsSlot.appendChild(result.wrap);
+    // Ajusta los flotantes al tamaño actual de la pantalla y rompe solapes
+    // (datos guardados antes de este cambio); persiste las correcciones.
+    const corrections = result.resolve();
+    if (corrections.length) {
+      for (const c of corrections) {
+        const w = store.get().widgets.find((x) => x.id === c.id);
+        if (w) {
+          updateWidget(c.id, { config: { ...(w.config || {}), x: c.x, y: c.y } });
+        }
+      }
+      this.renderWidgets();
+      return;
+    }
   }
 
   renderWidgetForm(widget) {
@@ -262,19 +282,12 @@ class NewTabApp {
   }
 
   bookmarkMenu(bm, e) {
-    const folders = topLevelFolders();
-    const submenu = [
-      { label: 'Sin carpeta', onClick: () => this.moveToFolder(bm, null) },
-      ...folders.map((f) => ({ label: f.title, onClick: () => this.moveToFolder(bm, f.id) })),
-    ];
-    if (folders.length) submenu.unshift({ separator: true });
     showContextMenu(
       [
         { label: 'Abrir', onClick: () => openBookmark(bm) },
         { label: 'Abrir en nueva pestaña', onClick: () => { const s = store.getSettings(); openBookmark(bm, s.linkBehavior === 'current'); } },
         { label: 'Editar…', onClick: () => this.renderSiteForm(bm) },
         { label: 'Cambiar icono…', onClick: () => this.renderIconForm(bm) },
-        { label: 'Mover a carpeta…', submenu },
         { label: 'Copiar URL', onClick: () => this.copyUrl(bm.url) },
         { separator: true },
         { label: 'Eliminar', danger: true, onClick: () => this.removeSite(bm) },

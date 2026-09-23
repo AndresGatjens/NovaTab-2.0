@@ -29,10 +29,27 @@ export async function addWidget(type) {
     type,
     position,
     enabled: true,
-    config: {},
+    config: defaultConfig(type),
   };
   await store.set('widgets', [...widgets, widget]);
   return widget;
+}
+
+export function defaultConfig(type) {
+  switch (type) {
+    case 'clock':
+      return { format: '12h', ampm: true };
+    case 'date':
+      return { format: 'full' };
+    case 'weather':
+      return { location: '', units: 'metric', detail: 'desc' };
+    case 'calendar':
+      return {};
+    case 'notes':
+      return { text: '' };
+    default:
+      return {};
+  }
 }
 
 export function deleteWidget(id) {

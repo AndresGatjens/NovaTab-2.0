@@ -213,6 +213,8 @@ export function renderWidgetForm({ widget, onSave } = {}) {
   let clockAmpm = true;
   let weatherLocation = '';
   let weatherUnits = 'metric';
+  let weatherDetail = 'desc';
+  let dateFormat = 'full';
 
   // Formato del reloj.
   if (widget.type === 'clock') {
@@ -252,7 +254,7 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     body.appendChild(ampmRow);
   }
 
-  // Clima: ubicación y unidades.
+  // Clima: ubicación, unidades y detalle.
   if (widget.type === 'weather') {
     weatherLocation = cfg.location ?? '';
     weatherUnits = cfg.units === 'imperial' ? 'imperial' : 'metric';
@@ -281,15 +283,70 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     unitsSeg.appendChild(makeU('imperial', '°F'));
     unitsWrap.appendChild(unitsSeg);
     body.appendChild(unitsWrap);
+
+    const detailWrap = el('div', 'settings-row');
+    detailWrap.appendChild(el('span', 'settings-label', t('widget.weather.detail')));
+    const detailSeg = el('div', 'seg');
+    weatherDetail = cfg.detail || 'desc';
+    const makeD = (v, label) => {
+      const b = el('button', 'seg-btn', label);
+      b.type = 'button';
+      if (weatherDetail === v) b.classList.add('active');
+      b.addEventListener('click', () => {
+        weatherDetail = v;
+        detailSeg.querySelectorAll('.seg-btn').forEach((x) => x.classList.remove('active'));
+        b.classList.add('active');
+      });
+      return b;
+    };
+    detailSeg.appendChild(makeD('desc', t('widget.weather.desc')));
+    detailSeg.appendChild(makeD('wind', t('weather.wind')));
+    detailSeg.appendChild(makeD('humidity', t('weather.humidity')));
+    detailSeg.appendChild(makeD('feels', t('weather.feels')));
+    detailWrap.appendChild(detailSeg);
+    body.appendChild(detailWrap);
   }
 
-  if (widget.type === 'date' || widget.type === 'calendar' || widget.type === 'notes') {
+  // Formato de la fecha.
+  if (widget.type === 'date') {
+    dateFormat = ['full', 'long', 'medium', 'short', 'numeric', 'daymonth', 'weekday'].includes(cfg.format) ? cfg.format : 'full';
+
+    const formatWrap = el('div', 'settings-row');
+    formatWrap.appendChild(el('span', 'settings-label', t('widget.date.format')));
+    const formatSeg = el('div', 'seg');
+    let chosen = dateFormat;
+    const makeF = (v, label) => {
+      const b = el('button', 'seg-btn', label);
+      b.type = 'button';
+      if (chosen === v) b.classList.add('active');
+      b.addEventListener('click', () => {
+        chosen = v;
+        dateFormat = v;
+        formatSeg.querySelectorAll('.seg-btn').forEach((x) => x.classList.remove('active'));
+        b.classList.add('active');
+      });
+      return b;
+    };
+    formatSeg.appendChild(makeF('full', t('widget.date.full')));
+    formatSeg.appendChild(makeF('long', t('widget.date.long')));
+    formatSeg.appendChild(makeF('medium', t('widget.date.medium')));
+    formatSeg.appendChild(makeF('short', t('widget.date.short')));
+    formatSeg.appendChild(makeF('numeric', t('widget.date.numeric')));
+    formatSeg.appendChild(makeF('daymonth', t('widget.date.daymonth')));
+    formatSeg.appendChild(makeF('weekday', t('widget.date.weekday')));
+    formatWrap.appendChild(formatSeg);
+    body.appendChild(formatWrap);
+
+    const note = el('p', 'settings-note');
+    note.textContent = t('widget.date.note');
+    body.appendChild(note);
+  }
+
+  if (widget.type === 'calendar' || widget.type === 'notes') {
     const note = el('p', 'settings-note');
     note.textContent = widget.type === 'calendar'
-      ? 'El widget de calendario no tiene ajustes adicionales (muestra el mes actual).'
-      : (widget.type === 'notes'
-        ? 'Escribe directamente sobre el widget. El texto se guarda solo.'
-        : 'El widget de fecha no tiene ajustes adicionales.');
+      ? t('widget.calendar.note')
+      : t('widget.notes.noteinfo');
     body.appendChild(note);
   }
 
@@ -323,6 +380,10 @@ export function renderWidgetForm({ widget, onSave } = {}) {
     if (widget.type === 'weather') {
       merged.location = (locInput && typeof locInput.value === 'string' ? locInput.value : weatherLocation).trim();
       merged.units = weatherUnits;
+      merged.detail = weatherDetail;
+    }
+    if (widget.type === 'date') {
+      merged.format = dateFormat;
     }
     merged.textScale = Math.round(textScale * 100) / 100;
     await updateWidget(widget.id, { config: merged });

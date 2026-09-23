@@ -4,9 +4,12 @@ import { enabledWidgets, updateWidget, widgets, addWidget } from '../services/wi
 import { showContextMenu } from './context-menu.js';
 import { fetchWeather, weatherLabel } from '../services/weather-api.js';
 import { t, getLang } from '../services/i18n.js';
+import { box, resolveFloat } from '../utils/layout.js';
 
-/** Widgets: reloj, fecha y clima (clima preparado, sin API aún). */
+/** Widgets: reloj, fecha, clima, calendario y notas. */
 let clockTimer = null;
+let barEl = null;
+let layerEl = null;
 
 export function renderWidgetsBar(app, handlers) {
   const widgetsState = widgets();
@@ -14,28 +17,52 @@ export function renderWidgetsBar(app, handlers) {
   bar.setAttribute('role', 'toolbar');
   bar.setAttribute('aria-label', 'Widgets');
   const layer = el('div', 'widgets-layer');
+  const floats = [];
 
   const sorted = enabledWidgets().slice().sort((a, b) => a.position - b.position);
   for (const widget of sorted) {
     const cfg = widget.config || {};
     const node = renderWidget(widget, handlers);
     if (typeof cfg.x === 'number' && typeof cfg.y === 'number') {
-      const maxLeft = Math.max(0, window.innerWidth - 160);
-      const maxTop = Math.max(0, window.innerHeight - 60);
-      node.style.left = `${Math.min(Math.max(0, cfg.x), maxLeft)}px`;
-      node.style.top = `${Math.min(Math.max(0, cfg.y), maxTop)}px`;
       node.classList.add('floating');
+      node.style.left = `${Math.max(0, cfg.x)}px`;
+      node.style.top = `${Math.max(0, cfg.y)}px`;
       layer.appendChild(node);
+      floats.push({ node, widget });
     } else {
       bar.appendChild(node);
     }
   }
 
-  if (layer.childElementCount === 0) layer.remove();
   const wrap = el('div', 'widgets-wrap');
   wrap.appendChild(bar);
-  wrap.appendChild(layer);
-  return wrap;
+  if (layer.childElementCount > 0) wrap.appendChild(layer);
+
+  barEl = bar;
+  layerEl = layer;
+
+  // Tras insertar en el DOM (para poder medir), ajusta cada flotante a la
+  // pantalla y elimina los posibles solapes (los datos guardados podrían
+  // haberse quedado antiguos). Devuelve las correcciones de posición.
+  const resolve = () => {
+    if (!floats.length) return [];
+    const obstacles = [];
+    if (bar.childElementCount > 0) {
+      const b = box(bar);
+      if (b.w > 0 && b.h > 0) obstacles.push(b);
+    }
+    const corrections = [];
+    for (const { node, widget } of floats) {
+      const rect = box(node);
+      if (rect.w <= 0 || rect.h <= 0) continue;
+      const pos = resolveFloat(node, obstacles);
+      if (pos.moved) corrections.push({ id: widget.id, x: pos.x, y: pos.y });
+      obstacles.push(box(node));
+    }
+    return corrections;
+  };
+
+  return { wrap, resolve };
 }
 
 function renderWidget(widget, handlers) {
@@ -115,6 +142,27 @@ function renderWidget(widget, handlers) {
   return node;
 }
 
+/** Recoloca `node` para que quede dentro de la pantalla y sin pisar la barra
+ *  ni los demás widgets flotantes. Devuelve la posición final. */
+function resolveInteractive(node) {
+  if (!layerEl || node.parentElement !== layerEl) {
+    const r = node.getBoundingClientRect();
+    return { x: Math.round(r.left), y: Math.round(r.top) };
+  }
+  const obstacles = [];
+  if (barEl && barEl.childElementCount > 0) {
+    const b = box(barEl);
+    if (b.w > 0 && b.h > 0) obstacles.push(b);
+  }
+  for (const other of layerEl.querySelectorAll('.widget.floating')) {
+    if (other === node) continue;
+    const b = box(other);
+    if (b.w > 0 && b.h > 0) obstacles.push(b);
+  }
+  const pos = resolveFloat(node, obstacles);
+  return { x: pos.x, y: pos.y };
+}
+
 /** Permite arrastrar el widget libremente; al soltar guarda su posición. */
 function enableWidgetDrag(node, widget, handlers) {
   if (typeof PointerEvent === 'undefined') return;
@@ -151,16 +199,19 @@ function enableWidgetDrag(node, widget, handlers) {
     node.classList.remove('dragging');
     if (node.releasePointerCapture) node.releasePointerCapture(e.pointerId);
     if (moved) {
-      // Posición final calculada del puntero, siempre dentro del viewport
-      // (nunca puede quedar fuera de la pantalla).
-      const maxLeft = Math.max(0, window.innerWidth - 160);
-      const maxTop = Math.max(0, window.innerHeight - 60);
-      const left = Math.min(Math.max(0, e.clientX - offsetX), maxLeft);
-      const top = Math.min(Math.max(0, e.clientY - offsetY), maxTop);
+      // Posición final calculada del puntero y resuelta: siempre dentro del
+      // viewport y sin pisar la barra ni otros widgets flotantes.
+      const left = Math.max(0, e.clientX - offsetX);
+      const top = Math.max(0, e.clientY - offsetY);
       node.style.left = `${left}px`;
       node.style.top = `${top}px`;
       node.classList.add('floating');
-      if (handlers.onDrop) handlers.onDrop(widget, left, top);
+      const pos = resolveInteractive(node);
+      if (pos.x !== left || pos.y !== top) {
+        node.style.left = `${pos.x}px`;
+        node.style.top = `${pos.y}px`;
+      }
+      if (handlers.onDrop) handlers.onDrop(widget, pos.x, pos.y);
     }
   };
   node.addEventListener('pointerup', end);
@@ -202,9 +253,18 @@ function enableWidgetResize(node, widget, handle, handlers) {
     node.classList.remove('resizing');
     if (handle.releasePointerCapture) handle.releasePointerCapture(e.pointerId);
     const rect = node.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
     const cfg = { ...(widget.config || {}) };
-    cfg.w = Math.round(rect.width);
-    cfg.h = Math.round(rect.height);
+    cfg.w = Math.round(Math.min(rect.width, vw));
+    cfg.h = Math.round(Math.min(rect.height, vh));
+    node.style.width = `${cfg.w}px`;
+    node.style.height = `${cfg.h}px`;
+    if (layerEl && node.parentElement === layerEl) {
+      const pos = resolveInteractive(node);
+      cfg.x = pos.x;
+      cfg.y = pos.y;
+    }
     updateWidget(widget.id, { config: cfg });
     if (handlers.onChange) handlers.onChange();
   };
@@ -235,9 +295,22 @@ function renderClock(node, widget) {
 function renderDate(node, widget) {
   const date = el('div', 'clock-date');
   const now = new Date();
+  const cfg = widget.config || {};
+  const format = cfg.format || 'full';
+  const locale = getLang() === 'en' ? 'en' : 'es';
+  const optsMap = {
+    full: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+    long: { year: 'numeric', month: 'long', day: 'numeric' },
+    medium: { year: 'numeric', month: 'short', day: 'numeric' },
+    short: { day: 'numeric', month: 'numeric', year: '2-digit' },
+    numeric: { day: '2-digit', month: '2-digit', year: 'numeric' },
+    daymonth: { day: 'numeric', month: 'long' },
+    weekday: { weekday: 'long' },
+  };
+  const opts = optsMap[format] || optsMap.full;
   try {
-    const locale = getLang() === 'en' ? 'en' : 'es';
-    date.textContent = now.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const str = now.toLocaleDateString(locale, opts).replace(/^./, (m) => m.toUpperCase());
+    date.textContent = str;
   } catch {
     date.textContent = now.toLocaleDateString();
   }
@@ -271,11 +344,21 @@ function renderWeather(node, widget, handlers) {
         const imperial = config.units === 'imperial';
         const displayTemp = (c) => imperial ? Math.round((c * 9 / 5) + 32) : Math.round(c);
         const displaySpeed = (kmh) => imperial ? Math.round(kmh / 1.609) : Math.round(kmh);
-        const unit = imperial ? '°F' : '°';
+        const unit = imperial ? '°F' : '°C';
+        const speedUnit = imperial ? 'mph' : 'km/h';
         temp.textContent = `${displayTemp(w.temp)}${unit}`;
         const place = w.place !== config.location.trim() ? w.place : '';
-        desc.textContent = `${weatherLabel(w.code)}${place ? ` · ${place}` : ''}`;
-        desc.title = `${weatherLabel(w.code)} · ${t('weather.feels')} ${displayTemp(w.feels ?? w.temp)}${unit} · ${t('weather.humidity')} ${w.humidity}% · ${t('weather.wind')} ${displaySpeed(w.wind)} ${imperial ? 'mph' : 'km/h'}`;
+        const detail = config.detail || 'desc';
+        if (detail === 'wind') {
+          desc.textContent = `${t('weather.wind')}: ${displaySpeed(w.wind)} ${speedUnit}`;
+        } else if (detail === 'humidity') {
+          desc.textContent = `${t('weather.humidity')}: ${w.humidity}%`;
+        } else if (detail === 'feels') {
+          desc.textContent = `${t('weather.feels')}: ${displayTemp(w.feels ?? w.temp)}${unit}`;
+        } else {
+          desc.textContent = `${weatherLabel(w.code)}${place ? ` · ${place}` : ''}`;
+        }
+        desc.title = `${weatherLabel(w.code)} · ${t('weather.feels')} ${displayTemp(w.feels ?? w.temp)}${unit} · ${t('weather.humidity')} ${w.humidity}% · ${t('weather.wind')} ${displaySpeed(w.wind)} ${speedUnit}`;
       } catch {
         temp.textContent = '—';
         desc.textContent = t('weather.offline');
