@@ -459,3 +459,6 @@
 - MOVIMIENTO: según el usuario, la sección "Gestor Nova" encaja mejor en la
   pestaña Cuadrícula (maneja carpetas/enlaces del grid) que en Datos.
   Movida de renderDatos a renderCuadricula (al final). Build OK.
+- CAPTURAS de referencia subidas: screenshots/settings-cuadricula.png
+  (panel con el botón Gestor Nova) y screenshots/gestor-nova.png (la app),
+  referenciadas en el README en la sección "¿Cómo se ve?".

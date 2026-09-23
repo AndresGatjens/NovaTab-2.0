@@ -65,6 +65,14 @@ Abre una nueva pestaña y listo. La extensión sobrescribe la página de "Nueva
 pestaña" de forma nativa (`chrome_url_overrides.newtab`), así que no necesitas
 pinchar en ningún botón: cada pestaña nueva ya es **Novantab**.
 
+Desde **Configuración → Cuadrícula** puedes abrir el **Gestor Nova**, una
+herramienta local para organizar carpetas y enlaces en bloque (arrastrar y
+soltar, búsqueda, mover y copia de seguridad):
+
+![Panel de configuración con el botón de Gestor Nova](screenshots/settings-cuadricula.png)
+
+![Gestor Nova: organización de carpetas y enlaces](screenshots/gestor-nova.png)
+
 ---
 
 ## 📦 Instalación (versión compilada)
