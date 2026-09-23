@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-build:
+    name: Tests + build Chrome
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Tests
+        run: npm test
+
+      - name: Build Chrome
+        run: npm run build
+
+      - name: Verificar dist/chrome
+        run: |
+          test -f dist/chrome/manifest.json && echo "dist/chrome OK"
+          test -f dist/chrome/background.js && echo "background.js OK"

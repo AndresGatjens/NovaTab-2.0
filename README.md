@@ -41,6 +41,22 @@ en `storage.local` de tu navegador — sin servidores, sin analítica, sin track
 
 ---
 
+## 🤝 Contribuir
+
+¿Quieres mejorar Novantab o descargarlo para usarlo? Todo lo que necesitas está
+en el repo:
+
+- 💾 **Descargar**: clona el repo (`git clone`) o descarga el `.zip` de la
+  última **Release** (lista para cargar en `chrome://extensions` como
+  descomprimida).
+- 🧑‍💻 **Mejorar**: lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de tocar código.
+  Hay plantillas para [reportar bugs](.github/ISSUE_TEMPLATE/bug_report.md),
+  [pedir funciones](.github/ISSUE_TEMPLATE/feature_request.md) y
+  [enviar pull requests](.github/PULL_REQUEST_TEMPLATE.md).
+- ✅ **CI**: tests + build de Chrome se ejecutan automáticamente en cada push y
+  PR (`.github/workflows/ci.yml`). Los tags `v*` generan una **Release** con el
+  `.zip` incluido (`release.yml`).
+
 ## 🤖 ¿Cómo se ve?
 
 Abre una nueva pestaña y listo. La extensión sobrescribe la página de "Nueva

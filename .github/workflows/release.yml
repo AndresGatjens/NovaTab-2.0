@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Empaquetar y publicar Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Chrome
+        run: npm run build
+
+      - name: Empacar extensión (.zip)
+        run: |
+          cd dist/chrome
+          zip -r ../../novantab-chrome.zip .
+          cd ../..
+
+      - name: Crear Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Novantab ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            novantab-chrome.zip
+          generate_release_notes: true
