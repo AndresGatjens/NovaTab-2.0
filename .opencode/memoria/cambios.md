@@ -528,3 +528,12 @@
 - **Fix 2:** el setInterval de refresco en renderWeather era global/único
   (weatherTimer) en vez de acumular timers viejos con la config anterior.
 - 16/16 tests OK · build OK · PUSHED a origin/main (7a3c42d).
+## 2026-09-23 — Fix: botón Guardar del clima roto - commit 0fed69c
+- **CAUSA:** en forms.js `locInput` se declaraba `const` DENTRO del bloque
+  `if (widget.type === 'weather')`, pero el handler del botón Guardar (fuera del
+  bloque) lo usaba -> ReferenceError al pulsar Guardar = no guardaba la ciudad.
+- **Fix:** `locInput` ahora `let` a nivel de función, asignado dentro del bloque.
+- **Test de regresión:** tests/weather-form.test.js (ejecuta renderWidgetForm y
+  pulsa Guardar con mock.module). `npm test` ahora con
+  `--experimental-test-module-mocks` (Node >=22.3). 18/18 tests OK · build OK.
+- PUSHED a origin/main (0fed69c).
