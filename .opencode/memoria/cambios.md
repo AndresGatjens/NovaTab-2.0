@@ -1,5 +1,16 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-22 — DnD entre ventanas: auto-scroll horizontal al arrastrar
+
+- Al arrastrar una carpeta/icono al borde derecho/izquierdo de la ventana, las
+  páginas NO avanzaban (no había auto-scroll) → el tile se soltaba en la misma
+  página. 
+- Añadido auto-scroll en `dragover` del host (grid.js): si el puntero entra en
+  los 64px del borde, avanza/retrocede una página cada ~380ms (carrusel).
+- El `drop` ahora calcula la página destino por la POSICIÓN REAL del puntero
+  (rect + scrollLeft), no por scrollLeft solo, más fiable durante el scroll.
+- Rebuild → dist/chrome (43 archivos). 16 tests OK.
+
 ## 2026-09-22 — Calendario compacto
 
 - El widget de calendario se veía "exagerado muy grande": meses con

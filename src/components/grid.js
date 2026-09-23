@@ -201,7 +201,28 @@ function renderPages(container, pages, buildCard, handlers) {
 
   // Soltar sobre el FONDO del contenedor (espacio vacío): permitir el drop
   // para que un favorito pueda salir de la carpeta a la cuadrícula raíz.
+  // Además, si el arrastre se acerca al borde horizontal arrastra las páginas
+  // (auto-scroll tipo carrusel) para poder mover tiles entre ventanas.
+  let edgeLastTs = 0;
   host.addEventListener('dragover', (e) => {
+    const pageW = host.clientWidth || 1;
+    const rect = host.getBoundingClientRect();
+    const edge = 64;
+    const nearLeft = e.clientX < rect.left + edge;
+    const nearRight = e.clientX > rect.right - edge;
+    if (nearLeft || nearRight) {
+      const now = Date.now();
+      if (now - edgeLastTs > 380) {
+        edgeLastTs = now;
+        const count = pages.length;
+        const current = Math.round(host.scrollLeft / pageW);
+        const dir = nearRight ? 1 : -1;
+        const target = (((current + dir) % count) + count) % count;
+        host.scrollTo({ left: target * pageW, behavior: 'smooth' });
+      }
+    } else {
+      edgeLastTs = 0;
+    }
     if (e.target.closest('.card')) return;
     e.preventDefault();
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
@@ -209,7 +230,12 @@ function renderPages(container, pages, buildCard, handlers) {
   host.addEventListener('drop', (e) => {
     if (e.target.closest('.card')) return;
     e.preventDefault();
-    const pageIndex = Math.round(host.scrollLeft / (host.clientWidth || 1)) || 0;
+    // Página destino según la posición real del puntero dentro de la ventana,
+    // compensando el scroll (más fiable que depender de scrollLeft a mitad).
+    const rect = host.getBoundingClientRect();
+    const pageW = rect.width || host.clientWidth || 1;
+    const localX = e.clientX - rect.left + host.scrollLeft;
+    const pageIndex = Math.max(0, Math.min(pages.length - 1, Math.floor(localX / pageW)));
     if (handlers.onEmptyDrop) handlers.onEmptyDrop(e, pageIndex);
   });
   return host;
