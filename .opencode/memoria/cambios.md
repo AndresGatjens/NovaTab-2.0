@@ -1,5 +1,29 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-28 — v2.2.0 subida a GitHub + CI arreglado (Node 24)
+
+- Publicada la v2.2.0: commit de código + memoria a `main`, tag `v2.2.0` y
+  release con `novantab-chrome.zip` (88 KB, 60 entradas, manifest 2.2.0).
+  `package.json` se subió a 2.2.0 para cuadrar con `manifest.chrome.json`.
+- **CI llevaba tiempo roto** (desde que se añadió `weather-form.test.js`): el
+  paso Tests fallaba y el build se saltaba. Dos causas, ambas reproducidas
+  localmente con Node 22.20 y 24.21:
+  1. `node --test tests/` no funciona en Node 22/24 ("Cannot find module
+     .../tests"): el runner trata el argumento posicional como archivo. En
+     Node 26 va bien, por eso en local no se notaba. El script ahora usa el
+     glob `"tests/*.test.js"`.
+  2. `weather-form.test.js` registraba los mocks por URL absoluta
+     (`file://.../modal.js`) pero `forms.js` importa `'../components/modal.js'`.
+     En Node 22 el mock no intercepta el specifier relativo y el import
+     revienta con "does not provide an export named 'button'". En Node 24+
+     sí. El código real está bien (`modal.js` exporta `button` y `field`, y
+     el build lo valida).
+- `ci.yml` y `release.yml` pasan a **Node 24** (LTS), `engines: >=24`, y el
+  requisito queda documentado en README (badge incluido) y CONTRIBUTING.
+- Lección: los requisitos de Node de los tests deben probarse con la MISMA
+  versión que el CI, no solo con la del portátil. Verificar con
+  22.20 / 24.21 / 26.10: 22/22 tests y build OK en 24 y 26.
+
 ## 2026-09-23 — Guardado global al salir del modo edición
 
 - Al salir del modo edición (clic derecho → "Salir" o Escape) se fuerza un
