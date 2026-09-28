@@ -17,7 +17,7 @@ externas ni servidores, y así debe continuar.
    npm run build          # genera dist/chrome
    npm test               # tests de URLs e import/export
    ```
-   Requisito: **Node.js ≥ 22.3** (los tests usan `mock.module`, que aún es
+   Requisito: **Node.js ≥ 24** (los tests usan `mock.module`, que aún es
    experimental). Sin `npm install` (no hay dependencias).
 
 4. Carga la extensión en Chrome/Chromium/Brave/Edge:

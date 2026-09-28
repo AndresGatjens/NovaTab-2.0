@@ -8,9 +8,9 @@
   "scripts": {
     "icons": "node scripts/icons.mjs",
     "build": "node scripts/build.mjs",
-    "test": "node --experimental-test-module-mocks --test tests/"
+    "test": "node --experimental-test-module-mocks --test \"tests/*.test.js\""
   },
   "engines": {
-    "node": ">=22.3"
+    "node": ">=24"
   }
 }
