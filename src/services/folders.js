@@ -62,6 +62,21 @@ export async function reorderFolder(id, targetIndex) {
   await store.set('folders', folders);
 }
 
+/**
+ * Saca una carpeta a la raíz y la deja al final del orden.
+ * (La interfaz no trabaja con carpetas anidadas: `parentId` siempre null.)
+ */
+export async function moveFolderToRoot(id) {
+  const { folders } = store.get();
+  if (!folders.find((f) => f.id === id)) return;
+  const pos = folders.filter((f) => f.parentId == null).length;
+  await store.set(
+    'folders',
+    folders.map((f) => (f.id === id ? { ...f, parentId: null, position: pos } : f))
+  );
+}
+
+
 export function findFolder(id) {
   return store.get().folders.find((f) => f.id === id) || null;
 }

@@ -56,6 +56,56 @@ function checkJsInTree(dir) {
     if (!existsSync(file)) continue;
     execSync(`node --check "${file}"`, { stdio: 'inherit' });
   }
+  // `node --check` solo mira la sintaxis: un `export` que falta en un módulo
+  // NO da error ahí, pero revienta la página con "does not provide an export
+  // named ...".  Se resuelve cada import contra los exports reales del archivo.
+  const exportsCache = new Map();
+  const exportsOf = (file) => {
+    if (exportsCache.has(file)) return exportsCache.get(file);
+    const src = readFileSync(file, 'utf8');
+    const names = new Set();
+    for (const m of src.matchAll(/^export\s+(?:async\s+)?(?:function\*?|class|const|let|var)\s+([A-Za-z0-9_$]+)/gm)) {
+      names.add(m[1]);
+    }
+    for (const m of src.matchAll(/^export\s*\{([^}]+)\}/gm)) {
+      for (const part of m[1].split(',')) {
+        const name = part.trim().split(/\s+as\s+/).pop().trim();
+        if (name) names.add(name);
+      }
+    }
+    if (/^export\s+default/m.test(src)) names.add('default');
+    exportsCache.set(file, names);
+    return names;
+  };
+
+  const problems = [];
+  for (const file of files) {
+    if (!existsSync(file) || !file.endsWith('.js')) continue;
+    const src = readFileSync(file, 'utf8');
+    const dir = dirname(file);
+    for (const m of src.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"](\.[^'"]+)['"]/g)) {
+      const target = join(dir, m[2]);
+      if (!existsSync(target)) {
+        problems.push(`${file.replace(dir + '/', '')}: no existe el módulo "${m[2]}"`);
+        continue;
+      }
+      const available = exportsOf(target);
+      for (const part of m[1].split(',')) {
+        const name = part.trim().split(/\s+as\s+/)[0].trim();
+        if (name && !available.has(name)) {
+          problems.push(
+            `${file.replace(dir + '/', '')}: importa "${name}" de "${m[2]}", pero ese módulo no lo exporta`
+          );
+        }
+      }
+    }
+  }
+  if (problems.length) {
+    console.error('  ERROR de exports:');
+    for (const p of problems) console.error(`   - ${p}`);
+    process.exitCode = 1;
+    throw new Error('Faltan exports: corrige los imports antes de publicar.');
+  }
 }
 
 function countFiles(dir) {

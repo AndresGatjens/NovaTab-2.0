@@ -107,3 +107,135 @@ body.animations-off .search-box {
   animation: none !important;
   transition: none !important;
 }
+
+/* ============ Modo edición: cajones reorganizables ============ */
+/* Los cajones (cuadrícula y widgets) no tienen bordes: el contorno, el
+   agarrador y el cursor aparecen SOLO en el modo edición al pasar el ratón. */
+.layout-drawer {
+  position: relative;
+}
+
+.layout-drawer.layout-fixed {
+  position: fixed;
+  z-index: 30;
+  margin: 0;
+  pointer-events: auto;
+  /* Sin esto el contenido impone su tamaño mínimo y el cajón no deja
+     encogerse por debajo de lo que "quieren" sus tarjetas dentro. */
+  min-width: 0;
+  min-height: 0;
+  /* Si se redimensiona por debajo del contenido, que pueda desplazarse. */
+  overflow: auto;
+}
+
+.edit-mode .layout-fixed {
+  touch-action: none;
+}
+
+.edit-mode .layout-drawer {
+  cursor: grab;
+}
+
+/* Los cajones no se encierran en un marco: solo aparece el agarrador ⠿ al
+   pasar el ratón en modo edición, para poder moverlos. */
+.layout-drawer.layout-fixed.dragging {
+  cursor: grabbing;
+  z-index: 70;
+}
+
+.layout-drawer::before {
+  content: '⠿';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
+  transition: opacity 0.15s ease;
+  z-index: 5;
+}
+
+.edit-mode .layout-drawer:hover::before {
+  opacity: 1;
+}
+
+/* La barra de widgets no es una caja: sin marco, sin agarrador.  Si todos los
+   widgets flotan sueltos la barra se queda sin altura, pero el cajón NUNCA se
+   oculta: dentro está la capa de los flotantes y esconderla los hace
+   desaparecer de la página. */
+.layout-drawer.no-box::before,
+.layout-drawer.no-box::after {
+  display: none;
+}
+
+/* ============ Tiradores de la cuadrícula y la barra de búsqueda ============ */
+/* 8 puntos: las 4 esquinas y los 4 centros de los lados.  Como el resto de
+   cosas de edición, solo se ven y funcionan en el modo edición. */
+.drawer-resize {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 6;
+  touch-action: none;
+  transition: opacity 0.15s ease;
+  background: transparent;
+}
+
+.drawer-resize::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 2px 6px rgba(2, 6, 23, 0.4);
+}
+
+/* Esquinas */
+.drawer-resize-nw { top: 0; left: 0; place-items: start start; }
+.drawer-resize-ne { top: 0; right: 0; place-items: start end; }
+.drawer-resize-se { bottom: 0; right: 0; place-items: end end; }
+.drawer-resize-sw { bottom: 0; left: 0; place-items: end start; }
+
+/* Centros de los lados */
+.drawer-resize-n { top: 0; left: 50%; transform: translateX(-50%); place-items: start center; }
+.drawer-resize-s { bottom: 0; left: 50%; transform: translateX(-50%); place-items: end center; }
+.drawer-resize-w { left: 0; top: 50%; transform: translateY(-50%); place-items: center start; }
+.drawer-resize-e { right: 0; top: 50%; transform: translateY(-50%); place-items: center end; }
+
+.edit-mode .layout-drawer .drawer-resize,
+.layout-drawer.resizing .drawer-resize {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body:not(.edit-mode) .drawer-resize {
+  display: none;
+}
+
+.layout-drawer.resizing {
+  user-select: none;
+}
+
+.widgets-bar:empty {
+  display: none;
+}
+
+.edit-mode .layout-drawer.layout-fixed.dragging,
+.edit-mode .layout-drawer.resizing {
+  z-index: 70;
+}
+
+.edit-mode .layout-drawer.resizing {
+  user-select: none;
+}

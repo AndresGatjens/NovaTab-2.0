@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Novantab",
   "short_name": "Novantab",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Nueva pestaña elegante y privada: búsqueda, favoritos, carpetas, widgets y personalización. Todos los datos se guardan localmente.",
   "chrome_url_overrides": {
     "newtab": "src/pages/newtab/newtab.html"

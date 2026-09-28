@@ -1,6 +1,6 @@
 {
   "name": "novantab",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Extensión New Tab moderna: búsqueda, favoritos, carpetas, widgets y personalización. 100% local, para Chrome/Chromium.",
   "type": "module",
   "license": "MIT",

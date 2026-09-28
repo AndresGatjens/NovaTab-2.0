@@ -15,6 +15,24 @@ class Store {
   constructor() {
     this.state = defaultState();
     this.bound = false;
+    this.listeners = new Set();
+  }
+
+  /** Se suscribe a los cambios de estado. Devuelve la función para darse de baja. */
+  subscribe(fn) {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
+  /** Avisa a los suscriptores de que el estado cambió. */
+  notify(path) {
+    for (const fn of this.listeners) {
+      try {
+        fn(path);
+      } catch (error) {
+        // Un suscriptor roto no debe impedir el repintado de los demás.
+      }
+    }
   }
 
   async init() {
@@ -68,18 +86,21 @@ class Store {
       cursor = cursor[parts[i]];
     }
     cursor[parts[parts.length - 1]] = value;
+    this.notify(path);
     await this.save();
     return this.state;
   }
 
   async replace(nextState) {
     this.state = this.sanitize(nextState);
+    this.notify('*');
     await this.save();
     return this.state;
   }
 
   async reset() {
     this.state = defaultState();
+    this.notify('*');
     await this.save();
     return this.state;
   }

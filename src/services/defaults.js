@@ -31,6 +31,11 @@ export const DEFAULT_SETTINGS = {
   showLabels: true,
   showFavicons: true,
   animations: true,
+  // Posiciones de los cajones movibles (modo edición): null = flujo normal.
+  layout: {
+    grid: null, // { x, y } | null
+    widgets: null, // { x, y } | null
+  },
 };
 
 export const DEFAULT_BOOKMARKS = [
@@ -60,12 +65,18 @@ export const DEFAULT_FOLDERS = [
   },
 ];
 
+/**
+ * Widgets por defecto.  Los cinco nacen activos y con sitio asignado: el clima
+ * y la fecha a la izquierda, la hora, el calendario y las notas a la derecha
+ * (ver HOME_SPOT en components/widgets.js).  El centro queda para la búsqueda
+ * y la cuadrícula.
+ */
 export const DEFAULT_WIDGETS = [
   { id: uid('wdg'), type: 'clock', position: 0, enabled: true, config: { format: '12h' } },
   { id: uid('wdg'), type: 'date', position: 1, enabled: true, config: { locale: 'es' } },
-  { id: uid('wdg'), type: 'weather', position: 2, enabled: false, config: { location: '', units: 'metric' } },
+  { id: uid('wdg'), type: 'weather', position: 2, enabled: true, config: { location: '', units: 'metric' } },
   { id: uid('wdg'), type: 'calendar', position: 3, enabled: true, config: { locale: 'es' } },
-  { id: uid('wdg'), type: 'notes', position: 4, enabled: false, config: { text: '' } },
+  { id: uid('wdg'), type: 'notes', position: 4, enabled: true, config: { text: '' } },
 ];
 
 export function defaultState() {

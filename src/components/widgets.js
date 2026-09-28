@@ -5,12 +5,36 @@ import { showContextMenu } from './context-menu.js';
 import { fetchWeather, weatherLabel } from '../services/weather-api.js';
 import { t, getLang } from '../services/i18n.js';
 import { box, resolveFloat } from '../utils/layout.js';
+import { isEditMode } from './layout-editor.js';
+import { addResizeHandles } from './resize-handles.js';
 
 /** Widgets: reloj, fecha, clima, calendario y notas. */
 let clockTimer = null;
 let weatherTimer = null;
 let barEl = null;
 let layerEl = null;
+
+/** Tamaño mínimo de un widget al redimensionarlo con los tiradores. */
+const MIN_WIDGET_W = 72;
+const MIN_WIDGET_H = 44;
+
+/**
+ * Dónde nace cada widget la primera vez (hasta que el usuario lo mueve).
+ * Izquierda: clima arriba y la fecha debajo.  Derecha: la hora arriba, el
+ * calendario debajo y las notas debajo.  El centro queda libre para la barra
+ * de búsqueda y la cuadrícula.
+ */
+const HOME_SPOT = {
+  weather: { side: 'left', slot: 0 },
+  date: { side: 'left', slot: 1 },
+  clock: { side: 'right', slot: 0 },
+  calendar: { side: 'right', slot: 1 },
+  notes: { side: 'right', slot: 2 },
+};
+
+/** Margen respecto al borde de la pantalla y hueco entre widgets apilados. */
+const HOME_MARGIN = 24;
+const HOME_GAP = 12;
 
 export function renderWidgetsBar(app, handlers) {
   const widgetsState = widgets();
@@ -19,6 +43,8 @@ export function renderWidgetsBar(app, handlers) {
   bar.setAttribute('aria-label', 'Widgets');
   const layer = el('div', 'widgets-layer');
   const floats = [];
+  // Widgets que nunca se han movido: se colocan en su hueco al medir.
+  const homed = [];
 
   const sorted = enabledWidgets().slice().sort((a, b) => a.position - b.position);
   for (const widget of sorted) {
@@ -30,6 +56,11 @@ export function renderWidgetsBar(app, handlers) {
       node.style.top = `${Math.max(0, cfg.y)}px`;
       layer.appendChild(node);
       floats.push({ node, widget });
+    } else if (HOME_SPOT[widget.type]) {
+      // Sin posición guardada: se deja en la capa y se coloca al medir, para
+      // que quede pegado al borde y apilado con los de su mismo lado.
+      layer.appendChild(node);
+      homed.push({ node, widget });
     } else {
       bar.appendChild(node);
     }
@@ -41,6 +72,35 @@ export function renderWidgetsBar(app, handlers) {
 
   barEl = bar;
   layerEl = layer;
+
+  // Tras insertar en el DOM (para poder medir), coloca los widgets nuevos en
+  // su hueco de la pantalla y guarda la posición: a partir de ahí ya cuentan
+  // como movidos por el usuario y no se recolocan.  Se apilan hacia abajo en
+  // el orden de "slot" de cada lado, guarding la altura real de cada uno.
+  const cursors = { left: HOME_MARGIN, right: HOME_MARGIN };
+  homed.sort((a, b) => HOME_SPOT[a.widget.type].slot - HOME_SPOT[b.widget.type].slot);
+  for (const { node, widget } of homed) {
+    const spot = HOME_SPOT[widget.type];
+    const w = node.offsetWidth || 180;
+    const h = node.offsetHeight || 96;
+    const x =
+      spot.side === 'left'
+        ? HOME_MARGIN
+        : Math.max(HOME_MARGIN, window.innerWidth - w - HOME_MARGIN);
+    const y = cursors[spot.side];
+    cursors[spot.side] = y + h + HOME_GAP;
+    node.classList.add('floating');
+    node.style.left = `${Math.round(x)}px`;
+    node.style.top = `${Math.round(y)}px`;
+    floats.push({ node, widget });
+    updateWidget(widget.id, {
+      config: { ...(widget.config || {}), x: Math.round(x), y: Math.round(y) },
+    });
+  }
+
+  // `empty` avisa a quien llama de que la barra se quedó sin widgets: si todos
+  // están flotando sueltos no debe quedar ninguna caja vacía en la página.
+  const empty = bar.childElementCount === 0;
 
   // Tras insertar en el DOM (para poder medir), ajusta cada flotante a la
   // pantalla y elimina los posibles solapes (los datos guardados podrían
@@ -63,7 +123,7 @@ export function renderWidgetsBar(app, handlers) {
     return corrections;
   };
 
-  return { wrap, resolve };
+  return { wrap, resolve, empty };
 }
 
 function renderWidget(widget, handlers) {
@@ -72,9 +132,17 @@ function renderWidget(widget, handlers) {
   node.setAttribute('aria-live', 'polite');
   const cfg = widget.config || {};
   if (cfg.units === 'imperial') node.dataset.units = 'imperial';
-  if (typeof cfg.w === 'number' && cfg.w >= 90) node.style.width = `${cfg.w}px`;
-  if (typeof cfg.h === 'number' && cfg.h >= 48) node.style.height = `${cfg.h}px`;
-  if (typeof cfg.w === 'number' && typeof cfg.h === 'number') node.classList.add('sized');
+  // Tamaño guardado al redimensionar con los tiradores (si no, tamaño natural).
+  let sized = false;
+  if (typeof cfg.w === 'number' && cfg.w >= MIN_WIDGET_W) {
+    node.style.width = `${cfg.w}px`;
+    sized = true;
+  }
+  if (typeof cfg.h === 'number' && cfg.h >= MIN_WIDGET_H) {
+    node.style.height = `${cfg.h}px`;
+    sized = true;
+  }
+  if (sized) node.classList.add('sized');
   if (typeof cfg.textScale === 'number' && cfg.textScale !== 1) {
     node.style.setProperty('--widget-scale', String(cfg.textScale));
   }
@@ -96,49 +164,53 @@ function renderWidget(widget, handlers) {
   });
   node.appendChild(toggle);
 
-  // Asa de redimensionado en la esquina inferior derecha (estilo Android).
-  const resize = el('button', 'widget-resize');
-  resize.type = 'button';
-  resize.title = t('widget.resize');
-  resize.setAttribute('aria-label', t('widget.resize'));
-  resize.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 20V16H6V18H18V6H16V4H20V20H4Z" opacity="0"/><path fill="currentColor" d="M20 4H16v2h2v2h-6V4h-2v2H8v2H6V4H4v2h2v2h2v6H6v2H4v2h2v2h2v2h2v-2h2v-2h-6v-2h6V8h2V6h2V4q0-1 1-1h1V4Z"/></svg>';
-  node.appendChild(resize);
-
   enableWidgetDrag(node, widget, handlers);
-  enableWidgetResize(node, widget, resize, handlers);
+  enableWidgetResize(node, widget, handlers);
 
   node.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const items = [
-      {
-        label: t('ctx.edit'),
-        onClick: () => {
-          if (handlers.onEdit) handlers.onEdit(widget);
-        },
+const items = [
+    {
+      label: t('ctx.edit'),
+      onClick: () => {
+        if (handlers.onEdit) handlers.onEdit(widget);
       },
-      {
-        label: node.classList.contains('floating') ? t('widget.toBar') : t('widget.hide'),
-        onClick: () => {
-          if (node.classList.contains('floating')) {
-            updateWidget(widget.id, { config: { ...(widget.config || {}), x: undefined, y: undefined } });
-          } else {
-            updateWidget(widget.id, { enabled: false });
-          }
-          if (handlers.onChange) handlers.onChange();
-        },
+    },
+  ];
+  if (!node.classList.contains('floating') && isEditMode()) {
+    items.push({
+      label: t('widget.toFloat'),
+      onClick: () => {
+        const r = node.getBoundingClientRect();
+        updateWidget(widget.id, {
+          config: { ...(widget.config || {}), x: Math.round(r.left), y: Math.round(r.top) },
+        });
+        if (handlers.onChange) handlers.onChange();
       },
-    ];
-    if (node.classList.contains('floating')) {
-      items.push({
-        label: t('widget.hide'),
-        onClick: () => {
-          updateWidget(widget.id, { enabled: false });
-          if (handlers.onChange) handlers.onChange();
-        },
-      });
-    }
-    showContextMenu(items, e.clientX, e.clientY);
+    });
+  }
+  items.push({
+    label: node.classList.contains('floating') ? t('widget.toBar') : t('widget.hide'),
+    onClick: () => {
+      if (node.classList.contains('floating')) {
+        updateWidget(widget.id, { config: { ...(widget.config || {}), x: undefined, y: undefined } });
+      } else {
+        updateWidget(widget.id, { enabled: false });
+      }
+      if (handlers.onChange) handlers.onChange();
+    },
+  });
+  if (node.classList.contains('floating')) {
+    items.push({
+      label: t('widget.hide'),
+      onClick: () => {
+        updateWidget(widget.id, { enabled: false });
+        if (handlers.onChange) handlers.onChange();
+      },
+    });
+  }
+  showContextMenu(items, e.clientX, e.clientY);
   });
   return node;
 }
@@ -175,6 +247,19 @@ function enableWidgetDrag(node, widget, handlers) {
   let startY = 0;
 
   node.addEventListener('pointerdown', (e) => {
+    if (!isEditMode()) return;
+    // Cada widget es un cajón individual: al agarrar uno que sigue en la
+    // barra se DESPEGA en su posición actual para recolocarlo por separado
+    // (misma clave, misma maquinaria de arrastre/cola/redimensionado).
+    if (!node.classList.contains('floating') && !node.parentElement.classList.contains('widgets-layer')) {
+      const rect = node.getBoundingClientRect();
+      updateWidget(widget.id, {
+        config: { ...(widget.config || {}), x: Math.round(rect.left), y: Math.round(rect.top) },
+      });
+      if (handlers.onDetach) handlers.onDetach(widget);
+      return;
+    }
+    if (!node.classList.contains('floating')) return;
     if (e.button !== 0) return;
     if (e.target.closest('button, .notes-input')) return;
     dragging = true;
@@ -219,58 +304,37 @@ function enableWidgetDrag(node, widget, handlers) {
   node.addEventListener('pointercancel', end);
 }
 
-/** Permite redimensionar el widget arrastrando su asa de esquina (Android). */
-function enableWidgetResize(node, widget, handle, handlers) {
-  if (typeof PointerEvent === 'undefined') return;
-  let resizing = false;
-  let startX = 0;
-  let startY = 0;
-  let startW = 0;
-  let startH = 0;
-
-  handle.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    resizing = true;
-    startX = e.clientX;
-    startY = e.clientY;
-    const rect = node.getBoundingClientRect();
-    startW = rect.width;
-    startH = rect.height;
-    node.classList.add('sized', 'resizing');
-    if (handle.setPointerCapture) handle.setPointerCapture(e.pointerId);
+/**
+ * Redimensionado del widget con los 8 tiradores de las esquinas y de los
+ * centros de los lados.  Al soltar se guarda el tamaño (y la posición si era
+ * flotante) en la configuración del widget.
+ */
+function enableWidgetResize(node, widget, handlers) {
+  addResizeHandles(node, {
+    className: 'widget-resize',
+    label: t('widget.resize'),
+    minW: MIN_WIDGET_W,
+    minH: MIN_WIDGET_H,
+    // Redimensionar es una acción de edición: fuera del modo edición no.
+    gate: isEditMode,
+    onEnd: (rect, target) => {
+      const cfg = { ...(widget.config || {}) };
+      cfg.w = Math.min(rect.w, window.innerWidth);
+      cfg.h = Math.min(rect.h, window.innerHeight);
+      target.style.width = `${cfg.w}px`;
+      target.style.height = `${cfg.h}px`;
+      target.classList.add('sized');
+      if (layerEl && target.parentElement === layerEl) {
+        const pos = resolveInteractive(target);
+        cfg.x = pos.x;
+        cfg.y = pos.y;
+        target.style.left = `${pos.x}px`;
+        target.style.top = `${pos.y}px`;
+      }
+      updateWidget(widget.id, { config: cfg });
+      if (handlers.onChange) handlers.onChange();
+    },
   });
-  handle.addEventListener('pointermove', (e) => {
-    if (!resizing) return;
-    const w = Math.max(72, Math.min(window.innerWidth, startW + (e.clientX - startX)));
-    const h = Math.max(44, Math.min(window.innerHeight, startH + (e.clientY - startY)));
-    node.style.width = `${w}px`;
-    node.style.height = `${h}px`;
-  });
-  const end = (e) => {
-    if (!resizing) return;
-    resizing = false;
-    node.classList.remove('resizing');
-    if (handle.releasePointerCapture) handle.releasePointerCapture(e.pointerId);
-    const rect = node.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const cfg = { ...(widget.config || {}) };
-    cfg.w = Math.round(Math.min(rect.width, vw));
-    cfg.h = Math.round(Math.min(rect.height, vh));
-    node.style.width = `${cfg.w}px`;
-    node.style.height = `${cfg.h}px`;
-    if (layerEl && node.parentElement === layerEl) {
-      const pos = resolveInteractive(node);
-      cfg.x = pos.x;
-      cfg.y = pos.y;
-    }
-    updateWidget(widget.id, { config: cfg });
-    if (handlers.onChange) handlers.onChange();
-  };
-  handle.addEventListener('pointerup', end);
-  handle.addEventListener('pointercancel', end);
 }
 
 function renderClock(node, widget) {

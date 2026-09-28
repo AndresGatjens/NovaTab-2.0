@@ -6,59 +6,10 @@ import { ACCENTS, DEFAULT_ACCENT, matchAccentPreset, expandAccent } from '../ser
 import { hexToHsl, hslToHex } from '../utils/color.js';
 import { SEARCH_ENGINES } from '../utils/url.js';
 import { toast } from './toast.js';
+import { renderGestor } from './gestor-panel.js';
 import { importFile, downloadConfig } from '../services/export-config.js';
 import { buildExportPayload, validateImport, applyImport } from '../services/import-export.js';
 import { LANGS, setLang, t } from '../services/i18n.js';
-
-/** URL del Gestor Nova (herramienta local para organizar carpetas y enlaces). */
-const GESTOR_URL = 'http://127.0.0.1:8734';
-
-/** Comprueba si el servidor local del Gestor Nova responde y pinta el estado. */
-async function checkGestor(statusEl) {
-  try {
-    const r = await fetch(`${GESTOR_URL}/api/datos`, { signal: AbortSignal.timeout(1500) });
-    statusEl.textContent = r.ok ? t('config.gestor.online') : t('config.gestor.offline');
-    statusEl.classList.toggle('ok', r.ok);
-  } catch {
-    statusEl.textContent = t('config.gestor.offline');
-    statusEl.classList.remove('ok');
-  }
-}
-
-/** Envía la configuración actual de la extensión al Gestor (archivo local). */
-async function gestorPush() {
-  try {
-    const r = await fetch(`${GESTOR_URL}/api/guardar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: buildExportPayload() }),
-      signal: AbortSignal.timeout(5000),
-    });
-    const j = await r.json().catch(() => ({}));
-    return r.ok && j.ok;
-  } catch {
-    return false;
-  }
-}
-
-/** Aplica en la extensión los cambios guardados en el Gestor. */
-async function gestorPull() {
-  let data;
-  try {
-    const r = await fetch(`${GESTOR_URL}/api/datos`, { signal: AbortSignal.timeout(5000) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok || !j.data) return false;
-    data = j.data;
-  } catch {
-    return false;
-  }
-  const { ok, errors, data: valid } = validateImport(data);
-  if (!ok) {
-    toast(errors.join(' '), 'error');
-    return false;
-  }
-  return valid;
-}
 
 /** Paleta de colores para fondos (evita el diálogo nativo que se sale de la página). */
 const PALETTE = [
@@ -71,7 +22,7 @@ const PALETTE = [
 ];
 
 /** Paleta rápida de presets. */
-function palette(elSwWrap, value, onChange) {
+function palette(value, onChange) {
   const wrap = el('div', 'palette');
   wrap._swatches = [];
   for (const color of PALETTE) {
@@ -125,7 +76,6 @@ function colorBar(value, onChange) {
   const label = (txt) => {
     const row = el('div', 'color-label-row');
     row.appendChild(el('span', 'color-label', txt));
-    row.appendChild(el('span', 'color-value', ''));
     return row;
   };
 
@@ -143,7 +93,7 @@ function colorBar(value, onChange) {
 function colorField(label, value, onChange) {
   const block = el('div', 'settings-block');
   block.appendChild(el('span', 'settings-label', label));
-  const paletteWrap = palette(null, value, (hex) => {
+  const paletteWrap = palette(value, (hex) => {
     bar._setValue(hex);
     onChange(hex);
   });
@@ -177,8 +127,8 @@ export function openSettingsPanel(onClose) {
   panel.appendChild(header);
 
   const nav = el('nav', 'settings-nav');
-  const sections = ['general', 'apariencia', 'widgets', 'cuadricula', 'privacidad', 'datos'];
-  const labels = { general: 'config.general', apariencia: 'config.appearance', widgets: 'config.widgets', cuadricula: 'config.grid', privacidad: 'config.privacy', datos: 'config.data' };
+  const sections = ['general', 'apariencia', 'widgets', 'cuadricula', 'gestor', 'privacidad', 'datos'];
+  const labels = { general: 'config.general', apariencia: 'config.appearance', widgets: 'config.widgets', cuadricula: 'config.grid', gestor: 'config.gestor.tab', privacidad: 'config.privacy', datos: 'config.data' };
   const content = el('div', 'settings-content');
   const navButtons = [];
   let currentKey = 'general';
@@ -203,12 +153,37 @@ export function openSettingsPanel(onClose) {
 
   function renderSection(key) {
     content.innerHTML = '';
+    // El Gestor trabaja sobre la cuadrícula entera, así que ocupa la ventana
+    // completa en vez de vivir en la columna estrecha del panel.
+    panel.classList.toggle('settings-panel-full', key === 'gestor');
+    content.classList.toggle('settings-content-full', key === 'gestor');
     if (key === 'general') renderGeneral(content);
     else if (key === 'apariencia') renderApariencia(content);
     else if (key === 'widgets') renderWidgets(content);
     else if (key === 'cuadricula') renderCuadricula(content);
+    else if (key === 'gestor') renderGestorSection(content);
     else if (key === 'privacidad') renderPrivacidad(content);
     else if (key === 'datos') renderDatos(content);
+  }
+
+  /**
+   * Gestor de carpetas y enlaces, ya integrado en la propia extensión (antes
+   * era una app local aparte que había que abrir en otra pestaña).  Los cambios
+   * se agrupan: al parar de tocar cosas se refresca la página una sola vez.
+   */
+  function renderGestorSection(host) {
+    host.appendChild(sectionTitle('config.gestor.title'));
+    host.appendChild(el('p', 'settings-note', t('config.gestor.note')));
+
+    let timer = null;
+    renderGestor(host, {
+      onChange: () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          if (typeof onClose === 'function') onClose({});
+        }, 400);
+      },
+    });
   }
 
   function refreshLanguage() {
@@ -242,6 +217,7 @@ export function openSettingsPanel(onClose) {
         btn.classList.add('active');
         refreshLanguage();
         document.dispatchEvent(new CustomEvent('nova:theme'));
+        document.dispatchEvent(new CustomEvent('nova:i18n'));
         toast(t('config.language.changed'));
       });
       languageWrap.appendChild(btn);
@@ -327,7 +303,7 @@ export function openSettingsPanel(onClose) {
       accentBar._setValue(hex);
       applyTheme();
     };
-    host.appendChild(palette(null, accentBase, applyAccent));
+    host.appendChild(palette(accentBase, applyAccent));
     const customLabel = el('div', 'color-label-row');
     customLabel.appendChild(el('span', 'color-label', t('config.accent.custom')));
     host.appendChild(customLabel);
@@ -358,17 +334,17 @@ export function openSettingsPanel(onClose) {
     host.appendChild(bgWrap);
 
     if (settings.background.type === 'color') {
-      colorBlock(host, t('config.bg.colorLabel'), settings.background.color, async (v) => {
+      colorField(host, t('config.bg.colorLabel'), settings.background.color, async (v) => {
         await updateBackground({ color: v });
         applyTheme();
       });
     }
     if (settings.background.type === 'gradient') {
-      colorBlock(host, t('config.bg.from'), settings.background.gradient.from, async (v) => {
+      colorField(host, t('config.bg.from'), settings.background.gradient.from, async (v) => {
         await updateBackground({ gradient: { ...settings.background.gradient, from: v } });
         applyTheme();
       });
-      colorBlock(host, t('config.bg.to'), settings.background.gradient.to, async (v) => {
+      colorField(host, t('config.bg.to'), settings.background.gradient.to, async (v) => {
         await updateBackground({ gradient: { ...settings.background.gradient, to: v } });
         applyTheme();
       });
@@ -500,41 +476,6 @@ export function openSettingsPanel(onClose) {
       await updateSettings({ animations: v });
       applyTheme();
     }));
-
-    host.appendChild(sectionTitle('config.gestor.title'));
-    const gestorNote = el('p', 'settings-note');
-    gestorNote.textContent = t('config.gestor.note');
-    host.appendChild(gestorNote);
-
-    const gestorBtns = el('div', 'data-actions');
-    const openBtn = el('button', 'btn btn-primary', t('config.gestor.open'));
-    openBtn.type = 'button';
-    openBtn.addEventListener('click', () => chrome.tabs.create({ url: GESTOR_URL }));
-    const pushBtn = el('button', 'btn', t('config.gestor.push'));
-    pushBtn.type = 'button';
-    pushBtn.addEventListener('click', async () => {
-      const ok = await gestorPush();
-      toast(ok ? t('config.gestor.sent') : t('config.gestor.error'), ok ? 'success' : 'error');
-    });
-    const pullBtn = el('button', 'btn', t('config.gestor.pull'));
-    pullBtn.type = 'button';
-    pullBtn.addEventListener('click', async () => {
-      const valid = await gestorPull();
-      if (!valid) {
-        toast(t('config.gestor.error'), 'error');
-        return;
-      }
-      await applyImport(valid);
-      toast(t('config.gestor.applied'), 'success');
-      dispose();
-    });
-    const status = el('span', 'gestor-status', t('config.gestor.offline'));
-    checkGestor(status);
-    gestorBtns.appendChild(openBtn);
-    gestorBtns.appendChild(pushBtn);
-    gestorBtns.appendChild(pullBtn);
-    gestorBtns.appendChild(status);
-    host.appendChild(gestorBtns);
   }
 
   function renderPrivacidad(host) {
@@ -583,18 +524,6 @@ export function openSettingsPanel(onClose) {
     r.appendChild(el('span', 'settings-label', label));
     r.appendChild(control);
     parent.appendChild(r);
-  }
-
-  function colorBlock(parent, label, value, onChange) {
-    parent.appendChild(colorField(label, value, onChange));
-  }
-
-  function inputColor(value, onInput) {
-    const input = el('input', 'color');
-    input.type = 'color';
-    input.value = value;
-    input.addEventListener('input', () => onInput(input.value));
-    return input;
   }
 
   function inputRange(value, min, max, step, onInput) {

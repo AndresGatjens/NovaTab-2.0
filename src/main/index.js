@@ -121,6 +121,20 @@ class NewTabApp {
         }
       });
     }
+
+    // El Gestor (Config › Gestor) cambia carpetas, enlaces y el orden global.
+    // Como la pestaña se abre a pantalla completa, la cuadrícula de detrás no
+    // se ve: además de refrescar al cerrar, aquí se repinta al instante para
+    // que, al salir del panel, ya esté todo al día.
+    store.subscribe((path) => {
+      if (path === '*' || path === 'settings' || path.startsWith('settings.')) {
+        applyTheme();
+        applyBackground();
+        this.renderSearch();
+      }
+      if (path === '*' || path === 'widgets') this.renderWidgets();
+      this.renderGrid();
+    });
   }
 
   renderSearch() {
