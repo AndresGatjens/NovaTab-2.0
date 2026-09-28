@@ -8,8 +8,8 @@
 [![Chrome](https://img.shields.io/badge/Chrome%20%2F%20Chromium-OK-4285F4?logo=google-chrome&logoColor=white&labelColor=555)]()
 [![Private](https://img.shields.io/badge/100%25%20local-no%20tracking-green?labelColor=555)]()
 [![License MIT](https://img.shields.io/badge/License-MIT-blue?labelColor=555)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-8b5cf6?labelColor=555)]()
-[![Node](https://img.shields.io/badge/Node-%E2%89%A5%2018-339933?logo=node.js&logoColor=white&labelColor=555)]()
+[![Version](https://img.shields.io/badge/version-2.2.0-8b5cf6?labelColor=555)]()
+[![Node](https://img.shields.io/badge/Node-%E2%89%A5%2022.3-339933?logo=node.js&logoVersion=22.3&logoColor=white&labelColor=555)]()
 
 Reemplaza la página de "Nueva pestaña" por una interfaz **moderna, rápida y 100 % privada**:
 búsqueda, favoritos, carpetas, widgets y personalización completa. Todo se guarda
@@ -94,7 +94,7 @@ El repo incluye el build listo para instalar en `dist/chrome/`.
 
 ## 🔨 Build desde el código
 
-Requisitos: **Node.js ≥ 18**. Sin dependencias externas (script propio).
+Requisitos: **Node.js ≥ 22.3** (los tests usan `mock.module`). Sin dependencias externas (script propio).
 
 ```bash
 npm run icons          # regenera los iconos PNG (opcional)

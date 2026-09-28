@@ -11,6 +11,6 @@
     "test": "node --experimental-test-module-mocks --test tests/"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.3"
   }
 }
