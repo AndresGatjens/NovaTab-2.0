@@ -1,5 +1,97 @@
 # Cambios del proyecto — Nova New Tab
 
+## 2026-09-23 — Guardado global al salir del modo edición
+
+- Al salir del modo edición (clic derecho → "Salir" o Escape) se fuerza un
+  **guardado global del estado actual**: `commitLayout()` lee la posición y el
+  tamaño REALES (getBoundingClientRect) de todos los cajones fijados
+  (cuadrícula, widgets, búsqueda) y persiste `settings.layout[key] = {x,y,w,h}`
+  de una vez, no cajón por cajón.
+- Los cajones que sigan en flujo (nunca movidos/reseteados) NO se tocan: se
+  conserva su entrada (null = flujo). Evita re-fijar con coordenadas obsoletas.
+- `toggleEditMode()` detecta si estaba activo (`wasActive`) → al salir llama
+  a `commitLayout()`. Los cajones se registran en `drawers` en `setupLayoutEditor`.
+- Experiencia: hace doble seguro de que nada se pierda si un drag/resize no se
+  persistió al soltar.
+
+## 2026-09-23 — Modo edición v3: sin botón flotante, búsqueda movible/redimensionable
+
+- ELIMINADO el botón flotante antiguo `#edit-fab` ("Editar/Hecho"): ahora el
+  modo edición se controla solo con el clic derecho ("Editar"/"Salir del modo
+  edición") y Escape. Quitados su HTML, `.edit-fab` del CSS y toda la lógica
+  `updateFab`/`fab` de layout-editor.js (también el listener `nova:i18n`
+  asociado). El `settings-fab` (engranaje) se mantiene intacto.
+- La BARRA DE BÚSQUEDA ahora también es un cajón del modo edición: se mueve y
+  redimensiona (manija) como barra y cuadrícula. Guardada en
+  `settings.layout.search = {x,y,w?,h?}`.
+- `setupLayoutEditor(gridSlot, widgetsSlot, searchSlot)`: wiring del cajón de
+  búsqueda (enableDrag + manija). `renderSearch` aplica `applySavedLayout('search')`.
+- Exclusión de arrastre ampliada para no romper la escritura: además de
+  botones/cards/widgets flotantes se excluyen `input, select, textarea`
+  (la búsqueda se agarra por su fondo/márgenes, el input sigue escribiendo).
+- Menú contextual (modo edición): nuevo "Restaurar posición de la búsqueda".
+- CSS: `#search-slot` ahora `layout-drawer`; `.layout-fixed` sube a z-index 30
+  (el cajón de búsqueda queda por encima de la cuadrícula) y `margin: 0`
+  (fijar la búsqueda ya no arrastra sus márgenes 6vh/4vh).
+- Smoke test (stubs DOM) verificó: búsqueda movida desde su fondo, un `input`
+  NO arrastra el cajón, resize con w/h persistido, y que ya no se crea el
+  botón edit-fab. Rebuild → dist/chrome (46 archivos). 18 tests OK.
+
+## 2026-09-23 — Modo edición v2: "Editar" en menú, barra movible, redimensionado
+
+- El clic derecho del fondo muestra ahora "Editar" (o "Salir del modo edición")
+  SIEMPRE página arriba, junto a "Crear carpeta…" y "Añadir página…"; los
+  "Restaurar posición…" siguen al final solo en modo edición.
+- La barra de widgets se mueve AGARRANDO SOBRE SUS PROPIOS WIDGETS en modo
+  edición (el cajón gana al grabar sobre un widget de la barra). Los widgets
+  FLOTANTES se siguen moviendo individualmente. Para flotar un widget de la
+  barra se añadió "Flotar libremente" a su menú contextual (en modo edición).
+- Nuevo: redimensionar cada cajón con manija `drawer-resize` (esquina
+  inf-der, visible al hover en modo edición). Se guarda `{x,y,w,h}` en
+  `settings.layout`; `applySavedLayout` reaplica tamaño guardado o, si no hay,
+  mide el natural. `overflow:auto` si el cajón fijo se reduce bajo su contenido.
+- layout-editor.js reescrito: `ensureResizeHandle` (se recrea por render
+  llamándola en applySavedLayout), `enableResize` con Pointer Events y fijado
+  automático si el cajón estaba en flujo.
+- BUG corregido: `resetDrawer` usaba updateSettings (mergeDefaults) que
+  IGNORA null en objetos anidados → no podía restaurar el cajón a flujo.
+  Ahora escribe directo con `store.set('settings', …)`.
+- Limpieza de código muerto en settings-panel.js: eliminados `inputColor`
+  (sin uso) y el wrapper trivial `colorBlock` (inlined a `colorField`) y el
+  span vacío `.color-value`. El helper `rangeRow` no existía (era memoria vieja).
+- Smoke test (stubs DOM) verificó: barra movida desde un widget, exclusión de
+  flotantes/tarjetas, resize con w/h persistido y restaurado, y reset a flujo.
+  Rebuild → dist/chrome (46 archivos). 18 tests OK.
+
+## 2026-09-23 — Modo edición: cajones reorganizables (cuadrícula y widgets)
+
+- Nueva función "modo edición" (botón flotante "Editar"/"Hecho", abajo-izquierda)
+  que permite mover la cuadrícula y la barra de widgets como un escritorio Linux.
+- Fuera del modo edición todo está BLOQUEADO: drag/resize de widgets gateado por
+  `isEditMode()`, y `body:not(.edit-mode) .widget-resize { display:none }`.
+- `src/components/layout-editor.js` (nuevo): exporta `isEditMode`,
+  `applySavedLayout`, `toggleEditMode`, `resetDrawer`, `setupLayoutEditor`.
+  Drag con Pointer Events + setPointerCapture, umbral 4px, clampRect al soltar.
+  Un cajón en flujo se convierte a `layout-fixed` en su PRIMER movimiento real
+  usando su rect natural (sin saltos).
+- Posiciones guardadas en `settings.layout = { grid, widgets }` (null | {x,y}),
+  en defaults.js; fluyen por export/import automáticamente.
+- `applySavedLayout` se llama al renderizar (grid y widgets): re-mide el tamaño
+  natural y reaplica `position: fixed` con x,y guardados.
+- Menú contextual del fondo (clic derecho): en modo edición añade "Salir del
+  modo edición" (arriba) y "Restaurar posición de cuadrícula/widgets" (abajo).
+- Escape sale del modo edición salvo que haya `.settings-overlay` o `.modal`
+  abiertos. Toast al entrar/salir. `nova:i18n` (dispatch nuevo en
+  settings-panel.js al cambiar idioma) refresca el texto del botón.
+- CSS: `.layout-drawer` (borde dashed + icono "⠿" solo al hover en modo
+  edición, cursor grab), `.edit-fab`, `.layout-drawer.layout-fixed`, dragging.
+- HTML: `#edit-fab` + clase `layout-drawer` en `#widgets-slot` y `#grid-slot`.
+- i18n: claves `edit.*` en español e inglés.
+- Smoke test (stubs DOM) validó el drag y la persistencia. Rebuild →
+  dist/chrome (46 archivos). 18 tests OK.
+- QUEDA FUERA (pendiente/opcional de la sesión anterior): la limpieza del panel
+  de ajustes (helper `rangeRow`, código muerto `inputColor`/`colorBlock`).
+
 ## 2026-09-22 — Tamaño de texto MANUAL por widget
 
 - Se elimina el auto-escalado con container queries (`cqmin`) del texto de los

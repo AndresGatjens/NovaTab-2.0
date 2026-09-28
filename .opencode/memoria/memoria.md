@@ -7,6 +7,14 @@ moderna, para Firefox/IceRaven (MV3) y Chrome/Chromium/Quetta (MV3).
 Todos los datos locales (storage.local). Sin dependencias de npm: build con
 script propio en Node (zlib nativo), iconos generados por script.
 
+ÚLTIMO (2026-09-23): modo edición para reorganizar los cajones — cuadrícula,
+barra de widgets y barra de BÚSQUEDA — con posiciones y tamaños guardados en
+`settings.layout {grid,widgets,search}` ({x,y,w,h}, manija de redimensionado).
+Sin botón flotante: se activa/sale con el clic derecho ("Editar") y Escape.
+Fuera del modo edición todo fijado. Módulo: `src/components/layout-editor.js`.
+Al SALIR del modo edición se fuerza `commitLayout()`: guarda posición y tamaño
+REALES de todos los cajones fijados a la vez (los en flujo conservan su estado).
+
 ## Entregado (FASE 1-12)
 
 - Búsqueda con 5 motores + personalizado con plantilla `{query}`.
